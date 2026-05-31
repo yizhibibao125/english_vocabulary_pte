@@ -413,7 +413,7 @@ function buildCard(item) {
       ${phonetic}
       ${pos}
       <span class="meaning">${escHtml(item.meaning)}</span>
-      <button class="btn-speak" onclick="speakWord(this, ${JSON.stringify(item.word)})" title="朗读单词">
+      <button class="btn-speak speak-word" data-word="${escHtml(item.word)}" title="朗读单词">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
           <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
@@ -421,7 +421,7 @@ function buildCard(item) {
         </svg>
         <span>单词</span>
       </button>
-      <button class="btn-speak" onclick="speakSentence(this, ${JSON.stringify(item.word)}, ${JSON.stringify(item.sentences)})" title="朗读例句">
+      <button class="btn-speak speak-sentence" data-sentence="${escHtml(enSentence(item.sentences, item.word))}" title="朗读例句">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
@@ -455,7 +455,7 @@ function buildSentences(lines, word) {
       const lineJson = JSON.stringify(enLines[i]);
       html += `<div class="sentence-en">
         ${highlighted}
-        <button class="btn-speak-inline" onclick="speakLine(this, ${lineJson})" title="朗读此句">
+        <button class="btn-speak-inline speak-line" data-line="${escHtml(enLines[i])}" title="朗读此句">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
@@ -534,6 +534,13 @@ function goPage(p) {
   render();
 }
 
+// ── 辅助：取第一句英文 ──
+function enSentence(sentences, word) {
+  const isChinese = s => /[\u4e00-\u9fff]/.test(s);
+  const en = (sentences || []).filter(s => !isChinese(s));
+  return en.length > 0 ? en[0] : word;
+}
+
 // ── TTS (Web Speech API) ──
 let currentBtn = null;
 let ttsVoices = [];
@@ -577,22 +584,26 @@ function doSpeak(text, btn) {
   setTimeout(() => speechSynthesis.speak(u), 50);
 }
 
+// ── 事件委托：统一处理所有朗读按钮点击 ──
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.speak-word, .speak-sentence, .speak-line');
+  if (!btn) return;
+  if (btn.classList.contains('speak-word')) {
+    doSpeak(btn.dataset.word, btn);
+  } else if (btn.classList.contains('speak-sentence')) {
+    doSpeak(btn.dataset.sentence, btn);
+  } else if (btn.classList.contains('speak-line')) {
+    doSpeak(btn.dataset.line, btn);
+  }
+});
+
 // ── Debug button ──
 document.getElementById('debugBtn').addEventListener('click', () => {
   const voices = speechSynthesis.getVoices();
-  const enVoices = voices.filter(v => v.lang.startsWith('en'));
   const best = getBestVoice();
-  let msg = `Web Speech API: ${window.speechSynthesis ? '✅' : '❌'}\n`;
-  msg += `声音总数: ${voices.length}\n`;
-  msg += `英文声音: ${enVoices.length}\n`;
-  enVoices.slice(0,4).forEach(v => msg += `  - ${v.name} (${v.lang})\n`);
-  msg += `\n将使用: ${best ? best.name : '默认'}\n`;
-  msg += `\n点确定后朗读 "hello world"`;
-  alert(msg);
-  doSpeak('hello world', document.getElementById('debugBtn'));
+  alert(`声音总数: ${voices.length}\n英文声音: ${voices.filter(v=>v.lang.startsWith('en')).length}\n使用: ${best ? best.name : '默认'}\n\n→ 点确定朗读 "hello"`);
+  doSpeak('hello', document.getElementById('debugBtn'));
 });
-
-function speakWord(btn, word) { doSpeak(word, btn); }
 
 function speakSentence(btn, word, sentences) {
   if (currentBtn === btn) { stopCurrent(); return; }
