@@ -182,7 +182,25 @@
       color: var(--en-color);
       line-height: 1.6;
       margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
     }
+    .btn-speak-inline {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 5px;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .btn-speak-inline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-speak-inline.playing { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
     .sentence-en .word-highlight {
       color: var(--primary);
       font-weight: 600;
@@ -296,7 +314,6 @@ let allData = [];
 let filtered = [];
 let currentPage = 1;
 let currentUtterance = null;
-let currentBtn = null;
 
 // ── Load data ──
 fetch('vocab_data.json')
@@ -394,13 +411,19 @@ function buildCard(item) {
       ${phonetic}
       ${pos}
       <span class="meaning">${escHtml(item.meaning)}</span>
-      <button class="btn-speak" onclick="speakSentence(this, ${JSON.stringify(item.word)}, ${JSON.stringify(item.sentences)})">
+      <button class="btn-speak" onclick="speakWord(this, ${JSON.stringify(item.word)})" title="朗读单词">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
           <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
           <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
         </svg>
-        <span>朗读</span>
+        <span>单词</span>
+      </button>
+      <button class="btn-speak" onclick="speakSentence(this, ${JSON.stringify(item.word)}, ${JSON.stringify(item.sentences)})" title="朗读例句">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span>例句</span>
       </button>
     </div>
     <div class="card-body">
@@ -427,7 +450,16 @@ function buildSentences(lines, word) {
     html += `<div class="sentence-group">`;
     if (enLines[i]) {
       const highlighted = highlightWord(escHtml(enLines[i]), word);
-      html += `<div class="sentence-en">${highlighted}</div>`;
+      const lineJson = JSON.stringify(enLines[i]);
+      html += `<div class="sentence-en">
+        ${highlighted}
+        <button class="btn-speak-inline" onclick="speakLine(this, ${lineJson})" title="朗读此句">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+        </button>
+      </div>`;
     }
     if (zhLines[i]) {
       html += `<div class="sentence-zh">${escHtml(zhLines[i])}</div>`;
@@ -500,72 +532,62 @@ function goPage(p) {
   render();
 }
 
-// ── TTS ──
-// 等待 voices 加载完成后缓存
-let voicesCache = [];
-function loadVoices() {
-  const v = speechSynthesis.getVoices();
-  if (v.length > 0) voicesCache = v;
-}
-loadVoices();
-speechSynthesis.onvoiceschanged = loadVoices;
+// ── TTS via Google Translate audio ──
+let currentAudio = null;
+let currentBtn = null;
 
-function getBestVoice() {
-  const voices = voicesCache.length > 0 ? voicesCache : speechSynthesis.getVoices();
-  // 优先：Microsoft Edge 英语声音
-  return voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en-US'))
-    || voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en'))
-    || voices.find(v => v.lang === 'en-US')
-    || voices.find(v => v.lang.startsWith('en'))
-    || null;
+function ttsUrl(text) {
+  return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=' + encodeURIComponent(text);
 }
 
-function speakSentence(btn, word, sentences) {
-  if (!window.speechSynthesis) { alert('你的浏览器不支持语音合成'); return; }
-
-  // 点击同一个按钮 → 停止
-  if (currentBtn === btn && speechSynthesis.speaking) {
-    speechSynthesis.cancel();
+function speakText(btn, text) {
+  // 点同一按钮 → 停止
+  if (currentBtn === btn && currentAudio && !currentAudio.paused) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
     btn.classList.remove('playing');
     currentBtn = null;
     return;
   }
-
   // 停止上一个
-  speechSynthesis.cancel();
-  if (currentBtn) { currentBtn.classList.remove('playing'); currentBtn = null; }
+  if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+  if (currentBtn) { currentBtn.classList.remove('playing'); }
 
-  // 取英文例句（过滤中文行）
+  const audio = new Audio(ttsUrl(text));
+  currentAudio = audio;
+  currentBtn = btn;
+  btn.classList.add('playing');
+
+  audio.onended = () => { btn.classList.remove('playing'); currentBtn = null; };
+  audio.onerror = () => {
+    btn.classList.remove('playing');
+    currentBtn = null;
+    // 降级：用 Web Speech API
+    if (window.speechSynthesis) {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US'; u.rate = 0.9;
+      speechSynthesis.speak(u);
+    }
+  };
+  audio.play();
+}
+
+// 朗读单词
+function speakWord(btn, word) {
+  speakText(btn, word);
+}
+
+// 朗读例句（取第一句英文）
+function speakSentence(btn, word, sentences) {
   const isChinese = s => /[\u4e00-\u9fff]/.test(s);
   const enSentences = sentences.filter(s => !isChinese(s));
-  const textToSpeak = enSentences.length > 0 ? enSentences[0] : word;
+  const text = enSentences.length > 0 ? enSentences[0] : word;
+  speakText(btn, text);
+}
 
-  function doSpeak() {
-    const utter = new SpeechSynthesisUtterance(textToSpeak);
-    utter.lang = 'en-US';
-    utter.rate = 0.9;
-    utter.pitch = 1;
-
-    const voice = getBestVoice();
-    if (voice) utter.voice = voice;
-
-    utter.onstart = () => { btn.classList.add('playing'); currentBtn = btn; };
-    utter.onend   = () => { btn.classList.remove('playing'); currentBtn = null; };
-    utter.onerror = (e) => {
-      console.warn('TTS error:', e.error);
-      btn.classList.remove('playing');
-      currentBtn = null;
-    };
-
-    speechSynthesis.speak(utter);
-  }
-
-  // 如果 voices 还没加载好，稍等后重试
-  if (voicesCache.length === 0) {
-    setTimeout(doSpeak, 300);
-  } else {
-    doSpeak();
-  }
+// 朗读指定句子
+function speakLine(btn, text) {
+  speakText(btn, text);
 }
 
 // ── Utils ──
