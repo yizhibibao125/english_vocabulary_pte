@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PTE 词汇表</title>
-  <script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -534,100 +534,65 @@ function goPage(p) {
   render();
 }
 
-// ── Debug button ──
-document.getElementById('debugBtn').addEventListener('click', () => {
-  let info = '';
-
-  // 1. ResponsiveVoice
-  if (window.responsiveVoice) {
-    const sup = responsiveVoice.voiceSupport();
-    info += `ResponsiveVoice 已加载: ✅\n  voiceSupport(): ${sup}\n`;
-    if (sup) {
-      responsiveVoice.speak('hello', 'US English Female');
-      info += '  → 已尝试朗读 "hello"\n';
-    }
-  } else {
-    info += 'ResponsiveVoice: ❌ 未加载\n';
-  }
-
-  // 2. Web Speech API
-  if (window.speechSynthesis) {
-    const voices = speechSynthesis.getVoices();
-    info += `\nWeb Speech API: ✅\n  voices数量: ${voices.length}\n`;
-    const enVoices = voices.filter(v => v.lang.startsWith('en'));
-    info += `  英文voices: ${enVoices.length}\n`;
-    enVoices.slice(0,3).forEach(v => info += `    - ${v.name} (${v.lang})\n`);
-    if (voices.length > 0) {
-      const u = new SpeechSynthesisUtterance('hello world');
-      u.lang = 'en-US';
-      const best = voices.find(v => v.lang.startsWith('en')) || null;
-      if (best) { u.voice = best; info += `  → 使用: ${best.name}\n`; }
-      speechSynthesis.speak(u);
-      info += '  → 已尝试朗读 "hello world"\n';
-    }
-  } else {
-    info += '\nWeb Speech API: ❌ 不支持\n';
-  }
-
-  alert(info);
-});
-
-
+// ── TTS (Web Speech API) ──
 let currentBtn = null;
+let ttsVoices = [];
+
+function loadVoices() {
+  const v = speechSynthesis.getVoices();
+  if (v.length) ttsVoices = v;
+}
+if (window.speechSynthesis) {
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function getBestVoice() {
+  return ttsVoices.find(v => v.name === 'Google US English')
+    || ttsVoices.find(v => v.lang === 'en-US')
+    || ttsVoices.find(v => v.lang.startsWith('en'))
+    || null;
+}
 
 function stopCurrent() {
-  if (window.responsiveVoice) responsiveVoice.cancel();
   if (window.speechSynthesis) speechSynthesis.cancel();
   if (currentBtn) { currentBtn.classList.remove('playing'); }
   currentBtn = null;
 }
 
 function doSpeak(text, btn) {
+  if (currentBtn === btn) { stopCurrent(); return; }
   stopCurrent();
+  if (!window.speechSynthesis) { alert('浏览器不支持语音'); return; }
   currentBtn = btn;
   btn.classList.add('playing');
-
-  const onEnd = () => {
-    btn.classList.remove('playing');
-    if (currentBtn === btn) currentBtn = null;
-  };
-
-  // 优先用 ResponsiveVoice（真人发音，无需翻墙）
-  if (window.responsiveVoice && responsiveVoice.voiceSupport()) {
-    responsiveVoice.speak(text, 'US English Female', {
-      rate: 0.9,
-      onend: onEnd,
-      onerror: () => { onEnd(); fallbackSpeak(text); }
-    });
-  } else {
-    // 降级：Web Speech API
-    fallbackSpeak(text, onEnd);
-  }
-}
-
-function fallbackSpeak(text, onEnd) {
-  if (!window.speechSynthesis) return;
-  speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'en-US';
-  u.rate = 0.88;
-  const voices = speechSynthesis.getVoices();
-  const best = voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en-US'))
-    || voices.find(v => v.lang === 'en-US')
-    || voices.find(v => v.lang.startsWith('en')) || null;
+  u.rate = 0.9;
+  u.pitch = 1;
+  const best = getBestVoice();
   if (best) u.voice = best;
-  if (onEnd) u.onend = onEnd;
-  speechSynthesis.speak(u);
-}
-if (window.speechSynthesis) {
-  speechSynthesis.getVoices();
-  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  u.onend   = () => { btn.classList.remove('playing'); if (currentBtn===btn) currentBtn=null; };
+  u.onerror = () => { btn.classList.remove('playing'); if (currentBtn===btn) currentBtn=null; };
+  setTimeout(() => speechSynthesis.speak(u), 50);
 }
 
-function speakWord(btn, word) {
-  if (currentBtn === btn) { stopCurrent(); return; }
-  doSpeak(word, btn);
-}
+// ── Debug button ──
+document.getElementById('debugBtn').addEventListener('click', () => {
+  const voices = speechSynthesis.getVoices();
+  const enVoices = voices.filter(v => v.lang.startsWith('en'));
+  const best = getBestVoice();
+  let msg = `Web Speech API: ${window.speechSynthesis ? '✅' : '❌'}\n`;
+  msg += `声音总数: ${voices.length}\n`;
+  msg += `英文声音: ${enVoices.length}\n`;
+  enVoices.slice(0,4).forEach(v => msg += `  - ${v.name} (${v.lang})\n`);
+  msg += `\n将使用: ${best ? best.name : '默认'}\n`;
+  msg += `\n点确定后朗读 "hello world"`;
+  alert(msg);
+  doSpeak('hello world', document.getElementById('debugBtn'));
+});
+
+function speakWord(btn, word) { doSpeak(word, btn); }
 
 function speakSentence(btn, word, sentences) {
   if (currentBtn === btn) { stopCurrent(); return; }
