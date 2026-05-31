@@ -298,6 +298,7 @@
 <div class="search-wrap">
   <input type="text" id="searchInput" placeholder="搜索单词、中文释义…" autocomplete="off" />
   <button class="btn-clear" id="clearBtn">清除</button>
+  <button class="btn-clear" id="debugBtn" style="color:#e67e22;border-color:#e67e22">🔊 测试发音</button>
 </div>
 
 <main>
@@ -533,7 +534,45 @@ function goPage(p) {
   render();
 }
 
-// ── TTS ──
+// ── Debug button ──
+document.getElementById('debugBtn').addEventListener('click', () => {
+  let info = '';
+
+  // 1. ResponsiveVoice
+  if (window.responsiveVoice) {
+    const sup = responsiveVoice.voiceSupport();
+    info += `ResponsiveVoice 已加载: ✅\n  voiceSupport(): ${sup}\n`;
+    if (sup) {
+      responsiveVoice.speak('hello', 'US English Female');
+      info += '  → 已尝试朗读 "hello"\n';
+    }
+  } else {
+    info += 'ResponsiveVoice: ❌ 未加载\n';
+  }
+
+  // 2. Web Speech API
+  if (window.speechSynthesis) {
+    const voices = speechSynthesis.getVoices();
+    info += `\nWeb Speech API: ✅\n  voices数量: ${voices.length}\n`;
+    const enVoices = voices.filter(v => v.lang.startsWith('en'));
+    info += `  英文voices: ${enVoices.length}\n`;
+    enVoices.slice(0,3).forEach(v => info += `    - ${v.name} (${v.lang})\n`);
+    if (voices.length > 0) {
+      const u = new SpeechSynthesisUtterance('hello world');
+      u.lang = 'en-US';
+      const best = voices.find(v => v.lang.startsWith('en')) || null;
+      if (best) { u.voice = best; info += `  → 使用: ${best.name}\n`; }
+      speechSynthesis.speak(u);
+      info += '  → 已尝试朗读 "hello world"\n';
+    }
+  } else {
+    info += '\nWeb Speech API: ❌ 不支持\n';
+  }
+
+  alert(info);
+});
+
+
 let currentBtn = null;
 
 function stopCurrent() {
