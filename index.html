@@ -4,287 +4,76 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PTE 词汇表</title>
-
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #f5f6fa;
-      --surface: #ffffff;
-      --border: #e8eaf0;
-      --primary: #4a6fa5;
-      --primary-light: #eef2f9;
-      --text: #2c3e50;
-      --text-muted: #7f8c9a;
-      --en-color: #2c3e50;
-      --zh-color: #555e6e;
-      --phrase-en: #3a5a8a;
-      --phrase-zh: #666;
-      --pos-bg: #eef2f9;
-      --pos-color: #4a6fa5;
-      --phonetic-color: #888;
-      --shadow: 0 2px 8px rgba(0,0,0,0.07);
-      --radius: 10px;
+      --bg: #f5f6fa; --surface: #fff; --border: #e8eaf0;
+      --primary: #4a6fa5; --primary-light: #eef2f9;
+      --text: #2c3e50; --muted: #7f8c9a;
+      --zh: #555e6e; --radius: 10px;
     }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── Header ── */
-    header {
-      background: var(--primary);
-      color: #fff;
-      padding: 18px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-    }
-    header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: 0.5px; }
+    header { background: var(--primary); color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+    header h1 { font-size: 1.2rem; font-weight: 600; }
     header .count { font-size: 0.85rem; opacity: 0.85; }
 
-    /* ── Search bar ── */
-    .search-wrap {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      position: sticky;
-      top: 57px;
-      z-index: 99;
-    }
-    .search-wrap input {
-      flex: 1;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 14px;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-      color: var(--text);
-    }
-    .search-wrap input:focus { border-color: var(--primary); }
-    .search-wrap input::placeholder { color: var(--text-muted); }
+    .toolbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; gap: 10px; align-items: center; position: sticky; top: 53px; z-index: 99; }
+    .toolbar input { flex: 1; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+    .toolbar input:focus { border-color: var(--primary); }
+    .btn { background: none; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px; cursor: pointer; color: var(--muted); font-size: 0.85rem; transition: all 0.2s; white-space: nowrap; }
+    .btn:hover { border-color: var(--primary); color: var(--primary); }
 
-    .btn-clear {
-      background: none;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 14px;
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      transition: all 0.2s;
-    }
-    .btn-clear:hover { border-color: var(--primary); color: var(--primary); }
+    main { max-width: 860px; margin: 0 auto; padding: 18px 16px 40px; }
+    .stats { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; }
 
-    /* ── Main ── */
-    main {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 20px 16px 40px;
-    }
-
-    /* ── Stats bar ── */
-    .stats {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-bottom: 14px;
-      padding: 0 2px;
-    }
-
-    /* ── Word Card ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 12px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      transition: box-shadow 0.2s;
-    }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; transition: box-shadow 0.2s; }
     .card:hover { box-shadow: 0 4px 16px rgba(74,111,165,0.12); }
 
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 18px 11px;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-    .word {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--primary);
-      letter-spacing: 0.3px;
-    }
-    .phonetic {
-      font-size: 0.83rem;
-      color: var(--phonetic-color);
-      font-style: italic;
-    }
-    .pos {
-      font-size: 0.73rem;
-      background: var(--pos-bg);
-      color: var(--pos-color);
-      padding: 2px 7px;
-      border-radius: 4px;
-      font-weight: 500;
-    }
-    .meaning {
-      font-size: 0.98rem;
-      color: var(--text);
-      font-weight: 500;
-      margin-left: 4px;
-    }
-    .btn-speak {
-      margin-left: auto;
-      background: none;
-      border: 1.5px solid var(--border);
-      border-radius: 7px;
-      padding: 5px 10px;
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 0.82rem;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-    .btn-speak:hover { border-color: var(--primary); color: var(--primary); }
-    .btn-speak.playing { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
-    .btn-speak svg { width: 14px; height: 14px; }
+    .card-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .word { font-size: 1.18rem; font-weight: 700; color: var(--primary); }
+    .phonetic { font-size: 0.82rem; color: #999; font-style: italic; }
+    .pos { font-size: 0.72rem; background: var(--primary-light); color: var(--primary); padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+    .meaning { font-size: 0.97rem; font-weight: 500; margin-left: 2px; }
 
-    .card-body { padding: 12px 18px 14px; }
+    .speak-btn { background: none; border: 1.5px solid var(--border); border-radius: 6px; padding: 4px 10px; cursor: pointer; color: var(--muted); font-size: 0.8rem; display: flex; align-items: center; gap: 4px; transition: all 0.2s; white-space: nowrap; margin-left: auto; }
+    .speak-btn + .speak-btn { margin-left: 4px; }
+    .speak-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .speak-btn.playing { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .speak-btn svg { width: 13px; height: 13px; }
 
-    /* ── Sentences ── */
-    .section-label {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-    .sentence-group { margin-bottom: 10px; }
-    .sentence-en {
-      font-size: 0.92rem;
-      color: var(--en-color);
-      line-height: 1.6;
-      margin-bottom: 2px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .btn-speak-inline {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 2px 5px;
-      cursor: pointer;
-      color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      flex-shrink: 0;
-      transition: all 0.2s;
-    }
-    .btn-speak-inline:hover { border-color: var(--primary); color: var(--primary); }
-    .btn-speak-inline.playing { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
-    .sentence-en .word-highlight {
-      color: var(--primary);
-      font-weight: 600;
-    }
-    .sentence-zh {
-      font-size: 0.88rem;
-      color: var(--zh-color);
-      line-height: 1.5;
-    }
+    .card-body { padding: 12px 16px 14px; }
+    .section-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 7px; font-weight: 600; }
+    .sentence-group { margin-bottom: 9px; }
+    .sentence-en { font-size: 0.91rem; line-height: 1.6; margin-bottom: 2px; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+    .sentence-en .hi { color: var(--primary); font-weight: 600; }
+    .sentence-zh { font-size: 0.87rem; color: var(--zh); line-height: 1.5; }
 
-    /* ── Phrases ── */
-    .phrases-section { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
-    .phrase-list { display: flex; flex-direction: column; gap: 5px; }
-    .phrase-item {
-      font-size: 0.88rem;
-      line-height: 1.5;
-      padding: 4px 8px;
-      border-radius: 5px;
-      background: var(--primary-light);
-    }
-    .phrase-en { color: var(--phrase-en); font-weight: 500; }
-    .phrase-zh { color: var(--phrase-zh); }
+    .speak-sm { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 1px 4px; cursor: pointer; color: var(--muted); display: inline-flex; align-items: center; flex-shrink: 0; transition: all 0.15s; }
+    .speak-sm:hover { border-color: var(--primary); color: var(--primary); }
+    .speak-sm.playing { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 
-    /* ── Pagination ── */
-    .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      margin-top: 28px;
-      flex-wrap: wrap;
-    }
-    .page-btn {
-      border: 1.5px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      padding: 7px 14px;
-      border-radius: 7px;
-      cursor: pointer;
-      font-size: 0.88rem;
-      transition: all 0.2s;
-      min-width: 40px;
-      text-align: center;
-    }
-    .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
-    .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .page-btn:disabled { opacity: 0.4; cursor: default; }
-    .page-info { font-size: 0.85rem; color: var(--text-muted); padding: 0 4px; }
+    .phrases-wrap { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+    .phrase-list { display: flex; flex-direction: column; gap: 4px; }
+    .phrase-item { font-size: 0.87rem; padding: 4px 8px; border-radius: 5px; background: var(--primary-light); line-height: 1.5; }
+    .phrase-en { color: #3a5a8a; font-weight: 500; }
+    .phrase-zh { color: #666; }
 
-    /* ── Empty state ── */
-    .empty {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-muted);
-    }
-    .empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.35; }
-    .empty p { font-size: 0.95rem; }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 24px; flex-wrap: wrap; }
+    .pg-btn { border: 1.5px solid var(--border); background: var(--surface); color: var(--text); padding: 6px 13px; border-radius: 7px; cursor: pointer; font-size: 0.87rem; transition: all 0.2s; min-width: 38px; text-align: center; }
+    .pg-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .pg-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .pg-btn:disabled { opacity: 0.38; cursor: default; }
+    .pg-dots { font-size: 0.85rem; color: var(--muted); }
 
-    /* ── Loading ── */
-    .loading {
-      text-align: center;
-      padding: 80px 20px;
-      color: var(--text-muted);
-      font-size: 1rem;
-    }
-    .spinner {
-      width: 36px; height: 36px;
-      border: 3px solid var(--border);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
-    }
+    .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .loading { text-align: center; padding: 80px 20px; color: var(--muted); }
+    .spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Responsive ── */
     @media (max-width: 600px) {
-      header { padding: 14px 16px; }
-      .search-wrap { padding: 12px 16px; }
-      .card-header { gap: 8px; }
-      .word { font-size: 1.1rem; }
-      .meaning { font-size: 0.92rem; }
-      .btn-speak span { display: none; }
+      .speak-btn span { display: none; }
+      .toolbar { padding: 10px 14px; }
     }
   </style>
 </head>
@@ -295,10 +84,9 @@
   <span class="count" id="totalCount">加载中…</span>
 </header>
 
-<div class="search-wrap">
+<div class="toolbar">
   <input type="text" id="searchInput" placeholder="搜索单词、中文释义…" autocomplete="off" />
-  <button class="btn-clear" id="clearBtn">清除</button>
-  <button class="btn-clear" id="debugBtn" style="color:#e67e22;border-color:#e67e22">🔊 测试发音</button>
+  <button class="btn" id="clearBtn">清除</button>
 </div>
 
 <main>
@@ -308,242 +96,141 @@
 </main>
 
 <script>
-// ── Config ──
 const PAGE_SIZE = 20;
+let allData = [], filtered = [], currentPage = 1;
 
-// ── State ──
-let allData = [];
-let filtered = [];
-let currentPage = 1;
-let currentUtterance = null;
-
-// ── Load data ──
+// ── 加载数据 ──
 fetch('vocab_data.json')
   .then(r => r.json())
   .then(data => {
-    allData = data;
-    filtered = data;
+    allData = filtered = data;
     document.getElementById('totalCount').textContent = `共 ${data.length} 个词条`;
     render();
   })
   .catch(() => {
-    document.getElementById('cardList').innerHTML =
-      '<div class="loading">⚠️ 数据加载失败，请确保 vocab_data.json 在同目录下。</div>';
+    document.getElementById('cardList').innerHTML = '<div class="loading">⚠️ 数据加载失败</div>';
   });
 
-// ── Search ──
-const searchInput = document.getElementById('searchInput');
-searchInput.addEventListener('input', () => {
-  const q = searchInput.value.trim().toLowerCase();
-  if (!q) {
-    filtered = allData;
-  } else {
-    filtered = allData.filter(item =>
-      item.word.toLowerCase().includes(q) ||
-      item.meaning.includes(q) ||
-      item.phonetic.includes(q)
-    );
-  }
+// ── 搜索 ──
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.trim().toLowerCase();
+  filtered = q ? allData.filter(d => d.word.toLowerCase().includes(q) || d.meaning.includes(q)) : allData;
   currentPage = 1;
   render();
 });
-
 document.getElementById('clearBtn').addEventListener('click', () => {
-  searchInput.value = '';
+  document.getElementById('searchInput').value = '';
   filtered = allData;
   currentPage = 1;
   render();
 });
 
-// ── Render ──
+// ── 渲染 ──
 function render() {
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   if (currentPage > totalPages) currentPage = totalPages;
+  const pageData = filtered.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
 
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const pageData = filtered.slice(start, start + PAGE_SIZE);
+  document.getElementById('statsBar').textContent =
+    document.getElementById('searchInput').value.trim()
+      ? `找到 ${total} 个结果，共 ${totalPages} 页`
+      : `共 ${total} 个词条，第 ${currentPage} / ${totalPages} 页`;
 
-  // Stats
-  const statsBar = document.getElementById('statsBar');
-  if (searchInput.value.trim()) {
-    statsBar.textContent = `找到 ${total} 个结果，共 ${totalPages} 页`;
-  } else {
-    statsBar.textContent = `共 ${total} 个词条，第 ${currentPage} / ${totalPages} 页`;
-  }
+  document.getElementById('cardList').innerHTML =
+    pageData.length === 0
+      ? '<div class="empty">没有找到匹配的词条</div>'
+      : pageData.map(buildCard).join('');
 
-  // Cards
-  const cardList = document.getElementById('cardList');
-  if (pageData.length === 0) {
-    cardList.innerHTML = `
-      <div class="empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <p>没有找到匹配的词条</p>
-      </div>`;
-  } else {
-    cardList.innerHTML = pageData.map(item => buildCard(item)).join('');
-  }
-
-  // Pagination
   renderPagination(totalPages);
-
-  // Scroll to top smoothly
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ── Build Card ──
+// ── 卡片 ──
+// 用一个全局数组存朗读文本，避免 HTML 属性转义问题
+const speakData = [];
+
 function buildCard(item) {
-  const phonetic = item.phonetic
-    ? `<span class="phonetic">${escHtml(item.phonetic)}</span>` : '';
-  const pos = item.pos
-    ? `<span class="pos">${escHtml(item.pos)}</span>` : '';
+  const isChinese = s => /[\u4e00-\u9fff]/.test(s);
+  const enLines = (item.sentences||[]).filter(s => !isChinese(s));
+  const zhLines = (item.sentences||[]).filter(s => isChinese(s));
+  const firstEn = enLines[0] || item.word;
 
-  // Sentences: pair English + Chinese
-  const sentencesHtml = buildSentences(item.sentences, item.word);
+  // 把朗读文本存入全局数组，用 index 引用，彻底避开 HTML 转义
+  const wordIdx = speakData.length; speakData.push(item.word);
+  const sentIdx = speakData.length; speakData.push(firstEn);
 
-  // Phrases
-  const phrasesHtml = item.phrases.length ? buildPhrases(item.phrases) : '';
-
-  return `
-  <div class="card">
+  let html = `<div class="card">
     <div class="card-header">
-      <span class="word">${escHtml(item.word)}</span>
-      ${phonetic}
-      ${pos}
-      <span class="meaning">${escHtml(item.meaning)}</span>
-      <button class="btn-speak speak-word" data-word="${escHtml(item.word)}" title="朗读单词">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-        </svg>
+      <span class="word">${esc(item.word)}</span>
+      ${item.phonetic ? `<span class="phonetic">${esc(item.phonetic)}</span>` : ''}
+      ${item.pos ? `<span class="pos">${esc(item.pos)}</span>` : ''}
+      <span class="meaning">${esc(item.meaning)}</span>
+      <button class="speak-btn" data-idx="${wordIdx}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
         <span>单词</span>
       </button>
-      <button class="btn-speak speak-sentence" data-sentence="${escHtml(enSentence(item.sentences, item.word))}" title="朗读例句">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
+      <button class="speak-btn" data-idx="${sentIdx}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         <span>例句</span>
       </button>
     </div>
-    <div class="card-body">
-      ${sentencesHtml}
-      ${phrasesHtml}
-    </div>
-  </div>`;
-}
+    <div class="card-body">`;
 
-function buildSentences(lines, word) {
-  if (!lines || lines.length === 0) return '';
-
-  // Detect Chinese: contains CJK chars
-  const isChinese = s => /[\u4e00-\u9fff]/.test(s);
-
-  // Pair up: English lines first, then Chinese
-  const enLines = lines.filter(l => !isChinese(l));
-  const zhLines = lines.filter(l => isChinese(l));
-
-  let html = `<div class="section-label">例句</div>`;
-  const maxPairs = Math.max(enLines.length, zhLines.length);
-
-  for (let i = 0; i < maxPairs; i++) {
-    html += `<div class="sentence-group">`;
-    if (enLines[i]) {
-      const highlighted = highlightWord(escHtml(enLines[i]), word);
-      const lineJson = JSON.stringify(enLines[i]);
-      html += `<div class="sentence-en">
-        ${highlighted}
-        <button class="btn-speak-inline speak-line" data-line="${escHtml(enLines[i])}" title="朗读此句">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-          </svg>
-        </button>
-      </div>`;
+  if (enLines.length > 0) {
+    html += `<div class="section-label">例句</div>`;
+    const maxLen = Math.max(enLines.length, zhLines.length);
+    for (let i = 0; i < maxLen; i++) {
+      html += `<div class="sentence-group">`;
+      if (enLines[i]) {
+        const lineIdx = speakData.length; speakData.push(enLines[i]);
+        const hi = esc(enLines[i]).replace(new RegExp(`(${esc(item.word).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<span class="hi">$1</span>');
+        html += `<div class="sentence-en">${hi}<button class="speak-sm" data-idx="${lineIdx}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button></div>`;
+      }
+      if (zhLines[i]) html += `<div class="sentence-zh">${esc(zhLines[i])}</div>`;
+      html += `</div>`;
     }
-    if (zhLines[i]) {
-      html += `<div class="sentence-zh">${escHtml(zhLines[i])}</div>`;
-    }
-    html += `</div>`;
   }
+
+  if (item.phrases && item.phrases.length) {
+    html += `<div class="phrases-wrap"><div class="section-label">短语</div><div class="phrase-list">`;
+    item.phrases.forEach(p => {
+      const m = p.match(/^([^\u4e00-\u9fff]+?)\s*([\u4e00-\u9fff].*)$/);
+      if (m) html += `<div class="phrase-item"><span class="phrase-en">${esc(m[1].trim())}</span> <span class="phrase-zh">${esc(m[2].trim())}</span></div>`;
+      else   html += `<div class="phrase-item"><span class="phrase-en">${esc(p)}</span></div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  html += `</div></div>`;
   return html;
 }
 
-function buildPhrases(phrases) {
-  const items = phrases.map(p => {
-    // Split at first Chinese character boundary
-    const match = p.match(/^([^\u4e00-\u9fff]+?)\s*([\u4e00-\u9fff].*)$/);
-    if (match) {
-      return `<div class="phrase-item">
-        <span class="phrase-en">${escHtml(match[1].trim())}</span>
-        <span class="phrase-zh"> ${escHtml(match[2].trim())}</span>
-      </div>`;
-    }
-    return `<div class="phrase-item"><span class="phrase-en">${escHtml(p)}</span></div>`;
-  }).join('');
-
-  return `<div class="phrases-section">
-    <div class="section-label">短语</div>
-    <div class="phrase-list">${items}</div>
-  </div>`;
-}
-
-function highlightWord(text, word) {
-  if (!word) return text;
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return text.replace(new RegExp(`(${escaped})`, 'gi'),
-    '<span class="word-highlight">$1</span>');
-}
-
-// ── Pagination ──
+// ── 分页 ──
 function renderPagination(totalPages) {
   const pg = document.getElementById('pagination');
   if (totalPages <= 1) { pg.innerHTML = ''; return; }
-
-  let html = '';
-  html += `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹ 上一页</button>`;
-
-  // Show window of pages
+  let h = `<button class="pg-btn" data-pg="${currentPage-1}" ${currentPage===1?'disabled':''}>‹ 上一页</button>`;
   const delta = 2;
   const pages = [];
-  for (let i = Math.max(1, currentPage-delta); i <= Math.min(totalPages, currentPage+delta); i++) {
-    pages.push(i);
-  }
-  if (pages[0] > 1) {
-    html += `<button class="page-btn" onclick="goPage(1)">1</button>`;
-    if (pages[0] > 2) html += `<span class="page-info">…</span>`;
-  }
-  pages.forEach(p => {
-    html += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
-  });
-  if (pages[pages.length-1] < totalPages) {
-    if (pages[pages.length-1] < totalPages-1) html += `<span class="page-info">…</span>`;
-    html += `<button class="page-btn" onclick="goPage(${totalPages})">${totalPages}</button>`;
-  }
-
-  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>下一页 ›</button>`;
-  pg.innerHTML = html;
+  for (let i = Math.max(1,currentPage-delta); i <= Math.min(totalPages,currentPage+delta); i++) pages.push(i);
+  if (pages[0] > 1) { h += `<button class="pg-btn" data-pg="1">1</button>`; if (pages[0]>2) h += `<span class="pg-dots">…</span>`; }
+  pages.forEach(p => h += `<button class="pg-btn ${p===currentPage?'active':''}" data-pg="${p}">${p}</button>`);
+  if (pages[pages.length-1] < totalPages) { if (pages[pages.length-1]<totalPages-1) h += `<span class="pg-dots">…</span>`; h += `<button class="pg-btn" data-pg="${totalPages}">${totalPages}</button>`; }
+  h += `<button class="pg-btn" data-pg="${currentPage+1}" ${currentPage===totalPages?'disabled':''}>下一页 ›</button>`;
+  pg.innerHTML = h;
 }
 
-function goPage(p) {
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  if (p < 1 || p > totalPages) return;
-  currentPage = p;
-  render();
-}
+document.getElementById('pagination').addEventListener('click', function(e) {
+  const btn = e.target.closest('.pg-btn');
+  if (!btn || btn.disabled) return;
+  const p = parseInt(btn.dataset.pg);
+  if (!isNaN(p)) { currentPage = p; render(); }
+});
 
-// ── 辅助：取第一句英文 ──
-function enSentence(sentences, word) {
-  const isChinese = s => /[\u4e00-\u9fff]/.test(s);
-  const en = (sentences || []).filter(s => !isChinese(s));
-  return en.length > 0 ? en[0] : word;
-}
-
-// ── TTS (Web Speech API) ──
-let currentBtn = null;
+// ── TTS ──
 let ttsVoices = [];
+let activeBtn = null;
 
 function loadVoices() {
   const v = speechSynthesis.getVoices();
@@ -561,71 +248,40 @@ function getBestVoice() {
     || null;
 }
 
-function stopCurrent() {
-  if (window.speechSynthesis) speechSynthesis.cancel();
-  if (currentBtn) { currentBtn.classList.remove('playing'); }
-  currentBtn = null;
-}
+function speak(text, btn) {
+  if (!window.speechSynthesis) return;
+  if (activeBtn === btn) {
+    speechSynthesis.cancel();
+    btn.classList.remove('playing');
+    activeBtn = null;
+    return;
+  }
+  speechSynthesis.cancel();
+  if (activeBtn) { activeBtn.classList.remove('playing'); activeBtn = null; }
 
-function doSpeak(text, btn) {
-  if (currentBtn === btn) { stopCurrent(); return; }
-  stopCurrent();
-  if (!window.speechSynthesis) { alert('浏览器不支持语音'); return; }
-  currentBtn = btn;
-  btn.classList.add('playing');
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'en-US';
   u.rate = 0.9;
-  u.pitch = 1;
-  const best = getBestVoice();
-  if (best) u.voice = best;
-  u.onend   = () => { btn.classList.remove('playing'); if (currentBtn===btn) currentBtn=null; };
-  u.onerror = () => { btn.classList.remove('playing'); if (currentBtn===btn) currentBtn=null; };
-  setTimeout(() => speechSynthesis.speak(u), 50);
+  const v = getBestVoice();
+  if (v) u.voice = v;
+  u.onstart = () => { activeBtn = btn; btn.classList.add('playing'); };
+  u.onend = u.onerror = () => { btn.classList.remove('playing'); if (activeBtn===btn) activeBtn=null; };
+  speechSynthesis.speak(u);
 }
 
-// ── 事件委托：统一处理所有朗读按钮点击 ──
+// ── 统一事件委托 ──
 document.addEventListener('click', function(e) {
-  const btn = e.target.closest('.speak-word, .speak-sentence, .speak-line');
+  const btn = e.target.closest('[data-idx]');
   if (!btn) return;
-  if (btn.classList.contains('speak-word')) {
-    doSpeak(btn.dataset.word, btn);
-  } else if (btn.classList.contains('speak-sentence')) {
-    doSpeak(btn.dataset.sentence, btn);
-  } else if (btn.classList.contains('speak-line')) {
-    doSpeak(btn.dataset.line, btn);
-  }
+  const idx = parseInt(btn.dataset.idx);
+  if (!isNaN(idx) && speakData[idx]) speak(speakData[idx], btn);
 });
 
-// ── Debug button ──
-document.getElementById('debugBtn').addEventListener('click', () => {
-  const voices = speechSynthesis.getVoices();
-  const best = getBestVoice();
-  alert(`声音总数: ${voices.length}\n英文声音: ${voices.filter(v=>v.lang.startsWith('en')).length}\n使用: ${best ? best.name : '默认'}\n\n→ 点确定朗读 "hello"`);
-  doSpeak('hello', document.getElementById('debugBtn'));
-});
-
-function speakSentence(btn, word, sentences) {
-  if (currentBtn === btn) { stopCurrent(); return; }
-  const isChinese = s => /[\u4e00-\u9fff]/.test(s);
-  const enSentences = sentences.filter(s => !isChinese(s));
-  doSpeak(enSentences.length > 0 ? enSentences[0] : word, btn);
-}
-
-function speakLine(btn, text) {
-  if (currentBtn === btn) { stopCurrent(); return; }
-  doSpeak(text, btn);
-}
-
-// ── Utils ──
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+// ── 工具函数 ──
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // 注意：不转义引号，因为不再用属性存文本
 }
 </script>
-
 </body>
 </html>
