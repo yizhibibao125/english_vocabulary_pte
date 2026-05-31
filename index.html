@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PTE 词汇表</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f6fa;
+      --surface: #ffffff;
+      --border: #e8eaf0;
+      --primary: #4a6fa5;
+      --primary-light: #eef2f9;
+      --text: #2c3e50;
+      --text-muted: #7f8c9a;
+      --en-color: #2c3e50;
+      --zh-color: #555e6e;
+      --phrase-en: #3a5a8a;
+      --phrase-zh: #666;
+      --pos-bg: #eef2f9;
+      --pos-color: #4a6fa5;
+      --phonetic-color: #888;
+      --shadow: 0 2px 8px rgba(0,0,0,0.07);
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: 0.5px; }
+    header .count { font-size: 0.85rem; opacity: 0.85; }
+
+    /* ── Search bar ── */
+    .search-wrap {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      position: sticky;
+      top: 57px;
+      z-index: 99;
+    }
+    .search-wrap input {
+      flex: 1;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      color: var(--text);
+    }
+    .search-wrap input:focus { border-color: var(--primary); }
+    .search-wrap input::placeholder { color: var(--text-muted); }
+
+    .btn-clear {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .btn-clear:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* ── Main ── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    /* ── Stats bar ── */
+    .stats {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      padding: 0 2px;
+    }
+
+    /* ── Word Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: 0 4px 16px rgba(74,111,165,0.12); }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .word {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.3px;
+    }
+    .phonetic {
+      font-size: 0.85rem;
+      color: var(--phonetic-color);
+      font-style: italic;
+    }
+    .pos {
+      font-size: 0.75rem;
+      background: var(--pos-bg);
+      color: var(--pos-color);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .meaning {
+      font-size: 1rem;
+      color: var(--text);
+      margin-left: auto;
+      font-weight: 500;
+    }
+    .btn-speak {
+      margin-left: auto;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      padding: 5px 10px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-speak:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-speak.playing { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .btn-speak svg { width: 14px; height: 14px; }
+
+    .card-body { padding: 12px 18px 14px; }
+
+    /* ── Sentences ── */
+    .section-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .sentence-group { margin-bottom: 10px; }
+    .sentence-en {
+      font-size: 0.92rem;
+      color: var(--en-color);
+      line-height: 1.6;
+      margin-bottom: 2px;
+    }
+    .sentence-en .word-highlight {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .sentence-zh {
+      font-size: 0.88rem;
+      color: var(--zh-color);
+      line-height: 1.5;
+    }
+
+    /* ── Phrases ── */
+    .phrases-section { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+    .phrase-list { display: flex; flex-direction: column; gap: 5px; }
+    .phrase-item {
+      font-size: 0.88rem;
+      line-height: 1.5;
+      padding: 4px 8px;
+      border-radius: 5px;
+      background: var(--primary-light);
+    }
+    .phrase-en { color: var(--phrase-en); font-weight: 500; }
+    .phrase-zh { color: var(--phrase-zh); }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+    .page-btn {
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      padding: 7px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      transition: all 0.2s;
+      min-width: 40px;
+      text-align: center;
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .page-btn:disabled { opacity: 0.4; cursor: default; }
+    .page-info { font-size: 0.85rem; color: var(--text-muted); padding: 0 4px; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.35; }
+    .empty p { font-size: 0.95rem; }
+
+    /* ── Loading ── */
+    .loading {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      header { padding: 14px 16px; }
+      .search-wrap { padding: 12px 16px; }
+      .card-header { gap: 8px; }
+      .word { font-size: 1.1rem; }
+      .meaning { font-size: 0.92rem; }
+      .btn-speak span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📖 PTE 词汇表</h1>
+  <span class="count" id="totalCount">加载中…</span>
+</header>
+
+<div class="search-wrap">
+  <input type="text" id="searchInput" placeholder="搜索单词、中文释义…" autocomplete="off" />
+  <button class="btn-clear" id="clearBtn">清除</button>
+</div>
+
+<main>
+  <div class="stats" id="statsBar"></div>
+  <div id="cardList"><div class="loading"><div class="spinner"></div>正在加载词汇数据…</div></div>
+  <div class="pagination" id="pagination"></div>
+</main>
+
+<script>
+// ── Config ──
+const PAGE_SIZE = 20;
+
+// ── State ──
+let allData = [];
+let filtered = [];
+let currentPage = 1;
+let currentUtterance = null;
+let currentBtn = null;
+
+// ── Load data ──
+fetch('vocab_data.json')
+  .then(r => r.json())
+  .then(data => {
+    allData = data;
+    filtered = data;
+    document.getElementById('totalCount').textContent = `共 ${data.length} 个词条`;
+    render();
+  })
+  .catch(() => {
+    document.getElementById('cardList').innerHTML =
+      '<div class="loading">⚠️ 数据加载失败，请确保 vocab_data.json 在同目录下。</div>';
+  });
+
+// ── Search ──
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim().toLowerCase();
+  if (!q) {
+    filtered = allData;
+  } else {
+    filtered = allData.filter(item =>
+      item.word.toLowerCase().includes(q) ||
+      item.meaning.includes(q) ||
+      item.phonetic.includes(q)
+    );
+  }
+  currentPage = 1;
+  render();
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  searchInput.value = '';
+  filtered = allData;
+  currentPage = 1;
+  render();
+});
+
+// ── Render ──
+function render() {
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageData = filtered.slice(start, start + PAGE_SIZE);
+
+  // Stats
+  const statsBar = document.getElementById('statsBar');
+  if (searchInput.value.trim()) {
+    statsBar.textContent = `找到 ${total} 个结果，共 ${totalPages} 页`;
+  } else {
+    statsBar.textContent = `共 ${total} 个词条，第 ${currentPage} / ${totalPages} 页`;
+  }
+
+  // Cards
+  const cardList = document.getElementById('cardList');
+  if (pageData.length === 0) {
+    cardList.innerHTML = `
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <p>没有找到匹配的词条</p>
+      </div>`;
+  } else {
+    cardList.innerHTML = pageData.map(item => buildCard(item)).join('');
+  }
+
+  // Pagination
+  renderPagination(totalPages);
+
+  // Scroll to top smoothly
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Build Card ──
+function buildCard(item) {
+  const phonetic = item.phonetic
+    ? `<span class="phonetic">${escHtml(item.phonetic)}</span>` : '';
+  const pos = item.pos
+    ? `<span class="pos">${escHtml(item.pos)}</span>` : '';
+
+  // Sentences: pair English + Chinese
+  const sentencesHtml = buildSentences(item.sentences, item.word);
+
+  // Phrases
+  const phrasesHtml = item.phrases.length ? buildPhrases(item.phrases) : '';
+
+  return `
+  <div class="card">
+    <div class="card-header">
+      <span class="word">${escHtml(item.word)}</span>
+      ${phonetic}
+      ${pos}
+      <span class="meaning">${escHtml(item.meaning)}</span>
+      <button class="btn-speak" onclick="speakSentence(this, ${JSON.stringify(item.word)}, ${JSON.stringify(item.sentences)})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+        <span>朗读</span>
+      </button>
+    </div>
+    <div class="card-body">
+      ${sentencesHtml}
+      ${phrasesHtml}
+    </div>
+  </div>`;
+}
+
+function buildSentences(lines, word) {
+  if (!lines || lines.length === 0) return '';
+
+  // Detect Chinese: contains CJK chars
+  const isChinese = s => /[\u4e00-\u9fff]/.test(s);
+
+  // Pair up: English lines first, then Chinese
+  const enLines = lines.filter(l => !isChinese(l));
+  const zhLines = lines.filter(l => isChinese(l));
+
+  let html = `<div class="section-label">例句</div>`;
+  const maxPairs = Math.max(enLines.length, zhLines.length);
+
+  for (let i = 0; i < maxPairs; i++) {
+    html += `<div class="sentence-group">`;
+    if (enLines[i]) {
+      const highlighted = highlightWord(escHtml(enLines[i]), word);
+      html += `<div class="sentence-en">${highlighted}</div>`;
+    }
+    if (zhLines[i]) {
+      html += `<div class="sentence-zh">${escHtml(zhLines[i])}</div>`;
+    }
+    html += `</div>`;
+  }
+  return html;
+}
+
+function buildPhrases(phrases) {
+  const items = phrases.map(p => {
+    // Split at first Chinese character boundary
+    const match = p.match(/^([^\u4e00-\u9fff]+?)\s*([\u4e00-\u9fff].*)$/);
+    if (match) {
+      return `<div class="phrase-item">
+        <span class="phrase-en">${escHtml(match[1].trim())}</span>
+        <span class="phrase-zh"> ${escHtml(match[2].trim())}</span>
+      </div>`;
+    }
+    return `<div class="phrase-item"><span class="phrase-en">${escHtml(p)}</span></div>`;
+  }).join('');
+
+  return `<div class="phrases-section">
+    <div class="section-label">短语</div>
+    <div class="phrase-list">${items}</div>
+  </div>`;
+}
+
+function highlightWord(text, word) {
+  if (!word) return text;
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(`(${escaped})`, 'gi'),
+    '<span class="word-highlight">$1</span>');
+}
+
+// ── Pagination ──
+function renderPagination(totalPages) {
+  const pg = document.getElementById('pagination');
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+
+  let html = '';
+  html += `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹ 上一页</button>`;
+
+  // Show window of pages
+  const delta = 2;
+  const pages = [];
+  for (let i = Math.max(1, currentPage-delta); i <= Math.min(totalPages, currentPage+delta); i++) {
+    pages.push(i);
+  }
+  if (pages[0] > 1) {
+    html += `<button class="page-btn" onclick="goPage(1)">1</button>`;
+    if (pages[0] > 2) html += `<span class="page-info">…</span>`;
+  }
+  pages.forEach(p => {
+    html += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  });
+  if (pages[pages.length-1] < totalPages) {
+    if (pages[pages.length-1] < totalPages-1) html += `<span class="page-info">…</span>`;
+    html += `<button class="page-btn" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  }
+
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>下一页 ›</button>`;
+  pg.innerHTML = html;
+}
+
+function goPage(p) {
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  render();
+}
+
+// ── TTS (Web Speech API - Microsoft Edge voices preferred) ──
+function speakSentence(btn, word, sentences) {
+  if (!window.speechSynthesis) { alert('你的浏览器不支持语音合成'); return; }
+
+  // If currently playing this button, stop
+  if (currentBtn === btn && speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+    btn.classList.remove('playing');
+    currentBtn = null;
+    return;
+  }
+
+  // Stop any previous
+  speechSynthesis.cancel();
+  if (currentBtn) currentBtn.classList.remove('playing');
+
+  // Get English sentences only
+  const isChinese = s => /[\u4e00-\u9fff]/.test(s);
+  const enSentences = sentences.filter(s => !isChinese(s));
+  const textToSpeak = enSentences.length > 0 ? enSentences[0] : word;
+
+  const utter = new SpeechSynthesisUtterance(textToSpeak);
+  utter.lang = 'en-US';
+  utter.rate = 0.92;
+  utter.pitch = 1;
+
+  // Prefer Microsoft Edge voices
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v =>
+    v.name.includes('Microsoft') && v.lang.startsWith('en')
+  ) || voices.find(v => v.lang === 'en-US') || null;
+  if (preferred) utter.voice = preferred;
+
+  utter.onstart = () => { btn.classList.add('playing'); currentBtn = btn; };
+  utter.onend = () => { btn.classList.remove('playing'); currentBtn = null; };
+  utter.onerror = () => { btn.classList.remove('playing'); currentBtn = null; };
+
+  speechSynthesis.speak(utter);
+}
+
+// Voices may load async
+speechSynthesis.onvoiceschanged = () => {};
+
+// ── Utils ──
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+
+</body>
+</html>
