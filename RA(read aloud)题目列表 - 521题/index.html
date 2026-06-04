@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RA – Read Aloud</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f4f6fb;--sur:#fff;--bdr:#e4e8f0;--pri:#2e7d5b;--pli:#e8f5ee;--pdk:#1e5c42;--txt:#1e2d3d;--mut:#7a8799;--zh:#4a5568;--rad:10px;--shd:0 2px 8px rgba(0,0,0,0.07)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+header{background:var(--pdk);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.18)}
+.toolbar{background:var(--sur);border-bottom:1px solid var(--bdr);padding:10px 20px;display:flex;gap:8px;align-items:center;position:sticky;top:51px;z-index:99}
+.toolbar input{flex:1;border:1.5px solid var(--bdr);border-radius:8px;padding:7px 12px;font-size:.9rem;outline:none;transition:border-color .2s}
+.toolbar input:focus{border-color:var(--pri)}
+.tbtn{background:none;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 13px;cursor:pointer;color:var(--mut);font-size:.82rem;transition:all .2s;white-space:nowrap}
+.tbtn:hover{border-color:var(--pri);color:var(--pri)}
+main{max-width:860px;margin:0 auto;padding:16px 14px 40px}
+.stats{font-size:.78rem;color:var(--mut);margin-bottom:10px}
+.card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rad);margin-bottom:12px;box-shadow:var(--shd);overflow:hidden}
+.card-header{background:var(--pri);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.card-num{font-size:.72rem;font-weight:700;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:4px}
+.card-title-en{font-size:.95rem;font-weight:600;flex:1}
+.card-title-zh{font-size:.82rem;opacity:.85}
+.spk{background:none;border:1px solid rgba(255,255,255,.4);border-radius:5px;padding:3px 8px;cursor:pointer;color:#fff;display:inline-flex;align-items:center;gap:4px;font-size:.78rem;transition:all .15s;flex-shrink:0}
+.spk:hover{background:rgba(255,255,255,.15)}
+.spk.on{background:rgba(255,255,255,.25)}
+.spk svg{width:13px;height:13px}
+.card-body{padding:14px 16px}
+.lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);font-weight:700;margin-bottom:8px}
+.full-text{font-size:.92rem;line-height:1.8;color:var(--txt);margin-bottom:14px;padding:10px 12px;background:var(--pli);border-radius:7px;border-left:3px solid var(--pri)}
+.trans-section{border-top:1px solid var(--bdr);padding-top:12px}
+.trans-item{margin-bottom:8px;padding-left:10px;border-left:2px solid var(--bdr)}
+.trans-en{font-size:.88rem;color:var(--txt);line-height:1.6;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.trans-zh{font-size:.84rem;color:var(--zh);line-height:1.5;margin-top:2px}
+.spk-sm{background:none;border:1px solid var(--bdr);border-radius:4px;padding:1px 5px;cursor:pointer;color:var(--mut);display:inline-flex;align-items:center;flex-shrink:0;transition:all .15s}
+.spk-sm:hover{border-color:var(--pri);color:var(--pri)}
+.spk-sm.on{border-color:var(--pri);color:var(--pri);background:var(--pli)}
+.pagination{display:flex;justify-content:center;align-items:center;gap:5px;margin-top:20px;flex-wrap:wrap}
+.pgb{border:1.5px solid var(--bdr);background:var(--sur);color:var(--txt);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.85rem;transition:all .2s;min-width:36px;text-align:center}
+.pgb:hover:not([disabled]){border-color:var(--pri);color:var(--pri)}
+.pgb.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+.pgb[disabled]{opacity:.35;cursor:default}
+.dots{color:var(--mut);padding:0 2px}
+.empty{text-align:center;padding:50px;color:var(--mut)}
+.loading{text-align:center;padding:60px;color:var(--mut)}
+.spinner{width:30px;height:30px;border:3px solid var(--bdr);border-top-color:var(--pri);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div><div style="font-size:1.1rem;font-weight:700">🔊 RA – Read Aloud</div><div style="font-size:.8rem;opacity:.75">PTE Academic · 朗读题 · 共 <span id="totalCount">…</span> 题</div></div>
+</header>
+<div class="toolbar">
+  <input type="text" id="searchInput" placeholder="搜索题目标题或内容…" autocomplete="off"/>
+  <button class="tbtn" id="clearBtn">清除</button>
+</div>
+<main>
+  <div class="stats" id="statsBar"></div>
+  <div id="cardList"><div class="loading"><div class="spinner"></div>加载中…</div></div>
+  <div class="pagination" id="pagination"></div>
+</main>
+<script>
+var PAGE=10,allData=[],filtered=[],cur=1,speakTexts={},spkIdx=0;
+
+var ttsV=[],ttsBtn=null;
+function ttsLoad(){var v=speechSynthesis.getVoices();if(v.length)ttsV=v;}
+if(window.speechSynthesis){ttsLoad();speechSynthesis.onvoiceschanged=ttsLoad;}
+function ttsBest(){return ttsV.find(function(v){return v.name==='Google US English';})||ttsV.find(function(v){return v.lang==='en-US';})||ttsV.find(function(v){return v.lang.startsWith('en');})||null;}
+function ttsSpeak(text,btn){
+  if(!window.speechSynthesis)return;
+  if(ttsBtn===btn){speechSynthesis.cancel();btn.classList.remove('on');ttsBtn=null;return;}
+  speechSynthesis.cancel();if(ttsBtn){ttsBtn.classList.remove('on');ttsBtn=null;}
+  var u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.9;
+  var b=ttsBest();if(b)u.voice=b;
+  ttsBtn=btn;btn.classList.add('on');
+  u.onend=u.onerror=function(){btn.classList.remove('on');if(ttsBtn===btn)ttsBtn=null;};
+  speechSynthesis.speak(u);
+}
+document.addEventListener('click',function(e){
+  var btn=e.target.closest('[data-spk]');if(!btn)return;
+  var t=speakTexts[btn.getAttribute('data-spk')];if(t)ttsSpeak(t,btn);
+});
+function mkSpk(t){var id='k'+(spkIdx++);speakTexts[id]=t;return id;}
+var spkSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+fetch('data.json').then(function(r){return r.json();}).then(function(d){
+  allData=filtered=d;
+  document.getElementById('totalCount').textContent=d.length;
+  render();
+}).catch(function(){document.getElementById('cardList').innerHTML='<div class="loading">⚠️ 数据加载失败</div>';});
+
+document.getElementById('searchInput').addEventListener('input',function(){
+  var q=this.value.trim().toLowerCase();
+  filtered=q?allData.filter(function(d){return(d.title_en+' '+d.title_zh+' '+d.text).toLowerCase().includes(q);}):allData;
+  cur=1;render();
+});
+document.getElementById('clearBtn').addEventListener('click',function(){
+  document.getElementById('searchInput').value='';filtered=allData;cur=1;render();
+});
+
+function render(){
+  speakTexts={};spkIdx=0;
+  var total=filtered.length,pages=Math.max(1,Math.ceil(total/PAGE));
+  if(cur>pages)cur=pages;
+  var data=filtered.slice((cur-1)*PAGE,cur*PAGE);
+  document.getElementById('statsBar').textContent='共 '+total+' 题，第 '+cur+' / '+pages+' 页';
+  document.getElementById('cardList').innerHTML=data.length?data.map(buildCard).join(''):'<div class="empty">没有匹配结果</div>';
+  renderPg(pages);window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function buildCard(d){
+  var fullId=mkSpk(d.text);
+  var h='<div class="card">';
+  // header
+  h+='<div class="card-header">';
+  h+='<span class="card-num">'+d.num+'</span>';
+  h+='<span class="card-title-en">'+esc(d.title_en)+'</span>';
+  if(d.title_zh)h+='<span class="card-title-zh">'+esc(d.title_zh)+'</span>';
+  h+='<button class="spk" data-spk="'+fullId+'">'+spkSvg+' 朗读全文</button>';
+  h+='</div>';
+  // body
+  h+='<div class="card-body">';
+  if(d.text){
+    h+='<div class="lbl">全文</div>';
+    h+='<div class="full-text">'+esc(d.text)+'</div>';
+  }
+  // 逐句翻译
+  if(d.translations&&d.translations.length>0){
+    h+='<div class="trans-section"><div class="lbl">逐句翻译</div>';
+    d.translations.forEach(function(line){
+      if(!line.trim())return;
+      // 逐句翻译格式: "English sentence.中文翻译。" 或 "English sentence. 中文翻译。"
+      var splitIdx=-1;
+      for(var i=0;i<line.length;i++){
+        var c=line.charCodeAt(i);
+        if(c>=0x4e00&&c<=0x9fff){splitIdx=i;break;}
+      }
+      if(splitIdx>0){
+        var en=line.substring(0,splitIdx).trim();
+        var zh=line.substring(splitIdx).trim();
+        var lineId=mkSpk(en);
+        h+='<div class="trans-item">';
+        h+='<div class="trans-en">'+esc(en)+' <button class="spk-sm" data-spk="'+lineId+'">'+spkSvg+'</button></div>';
+        h+='<div class="trans-zh">'+esc(zh)+'</div>';
+        h+='</div>';
+      } else {
+        h+='<div class="trans-item"><div class="trans-en">'+esc(line)+'</div></div>';
+      }
+    });
+    h+='</div>';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+function renderPg(pages){
+  var pg=document.getElementById('pagination');
+  if(pages<=1){pg.innerHTML='';return;}
+  var h='<button class="pgb" data-pg="'+(cur-1)+'" '+(cur===1?'disabled':'')+'>‹ 上一页</button>';
+  var d=2,ps=[];
+  for(var i=Math.max(1,cur-d);i<=Math.min(pages,cur+d);i++)ps.push(i);
+  if(ps[0]>1){h+='<button class="pgb" data-pg="1">1</button>';if(ps[0]>2)h+='<span class="dots">…</span>';}
+  ps.forEach(function(p){h+='<button class="pgb '+(p===cur?'active':'')+'" data-pg="'+p+'">'+p+'</button>';});
+  if(ps[ps.length-1]<pages){if(ps[ps.length-1]<pages-1)h+='<span class="dots">…</span>';h+='<button class="pgb" data-pg="'+pages+'">'+pages+'</button>';}
+  h+='<button class="pgb" data-pg="'+(cur+1)+'" '+(cur===pages?'disabled':'')+'>下一页 ›</button>';
+  pg.innerHTML=h;
+}
+document.getElementById('pagination').addEventListener('click',function(e){
+  var b=e.target.closest('.pgb');if(!b||b.hasAttribute('disabled'))return;
+  var p=parseInt(b.getAttribute('data-pg'));if(!isNaN(p)){cur=p;render();}
+});
+</script>
+</body>
+</html>
