@@ -236,7 +236,7 @@ function buildCard(item) {
       h += '<div class="sg">';
       if (enLines[i]) {
         var lineId = mkSpkId(enLines[i]);
-        var re = new RegExp('(' + esc(item.word).replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+        var re = new RegExp('\\b(' + esc(item.word).replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')\\b', 'gi');
         var hi = esc(enLines[i]).replace(re, '<span class="hi">$1</span>');
         h += '<div class="sen">' + hi + '<button class="spksm" data-spk="' + lineId + '">' + smSvg + '</button></div>';
       }
