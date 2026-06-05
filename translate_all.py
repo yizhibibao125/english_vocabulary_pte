@@ -21,59 +21,29 @@ import json, os, time, sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 需要翻译的题型和对应字段
+# 需要翻译的题型和对应字段（仅6个）
 TASKS = [
-    # (文件夹名, JSON文件名, 需要翻译的字段列表)
-    ("WE(write essay)题目列表 - 190题",
-     "data.json", ["title_en", "question"]),
+    # RA 不需要翻译（逐句翻译已在文档中）
 
+    # RTS: 情景和参考答案需要中文翻译
+    ("RTS(respond to situation)题目列表 - 155题",
+     "data.json", ["situation", "answer"]),
+
+    # SWT: 文章和参考答案需要中文翻译
     ("SWT(summarize written text)题目列表 - 216题",
-     "data.json", ["title_en", "question"]),
+     "data.json", ["question", "answer"]),
 
+    # SST: 参考答案需要中文翻译
     ("SST(summarize spoken text)题目列表 - 294题",
-     "data.json", ["title_en"]),
+     "data.json", ["answer"]),
 
-    ("SGD(summarize group discussion)题目列表 - 56题",
-     "data.json", ["title_en"]),
-
-    ("MA_R(multiple choice reading)题目列表 - 82题",
-     "data.json", ["title_en", "question"]),
-
-    ("MA_L(multipe choice listening)题目列表 - 99题",
-     "data.json", ["title_en"]),
-
-    ("SA_R(single answer reading)题目列表 - 108题",
-     "data.json", ["title_en", "question"]),
-
-    ("SA_L(single answer listening)题目列表 - 89题",
-     "data.json", ["title_en"]),
-
-    ("HCS(highlight correct summary)题目列表 - 90题",
-     "data.json", ["title_en"]),
-
-    ("SMW(select missing word)题目列表 - 117题",
-     "data.json", ["title_en"]),
-
+    # RL: 参考答案需要中文翻译
     ("RL(retell lecture)题目列表 - 242题",
-     "data.json", ["title_en"]),
+     "data.json", ["answer"]),
 
-    ("RP(re-order paragraph)题目列表 - 296题",
-     "data.json", ["title_en"]),
-
+    # DI: 参考答案需要中文翻译
     ("DI(describe image)题目列表 - 464题",
-     "data.json", ["title_en"]),
-
-    ("FIB_R(fill in blanks reading)题目列表 - 412题",
-     "data.json", ["title_en"]),
-
-    ("FIB_LW(fill in blanks-listening writing)题目列表 - 152题",
-     "data.json", ["title_en"]),
-
-    ("FIB_RW(fill in blanks-reading writing)题目列表 - 549题",
-     "data.json", ["title_en"]),
-
-    ("HIW(highlight incorrect word)题目列表 - 114题",
-     "data.json", ["title_en"]),
+     "data.json", ["answer"]),
 ]
 
 def is_chinese(text):
