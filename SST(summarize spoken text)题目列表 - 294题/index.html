@@ -150,19 +150,27 @@ function buildCard(d){
     d.images.forEach(function(src){h+='<div class="img-wrap"><img src="'+src+'" alt="题目图片" loading="lazy"/></div>';});
   }
   if(d.extra_text&&d.extra_text.length){
-    var txt=d.extra_text.join(' ');
-    var tid=mkSpk(txt);
-    h+='<div class="lbl">内容</div>';
-    h+='<div class="passage-box" style="border-left-color:#c0600a"><div class="en-row">';
-    h+='<span>'+esc(txt)+'</span>';
-    h+='<button class="spk" data-spk="'+tid+'">'+spkSvg+'</button></div></div>';
+    // 过滤掉"音频原文"标签行
+    var lines=d.extra_text.filter(function(t){return t!=='音频原文'&&t!=='音频原文：';});
+    if(lines.length){
+      var txt=lines.join(' ');
+      var tid=mkSpk(txt);
+      h+='<div class="lbl">音频内容</div>';
+      h+='<div class="passage-box" style="border-left-color:#c0600a"><div class="en-row">';
+      h+='<span>'+esc(txt)+'</span>';
+      h+='<button class="spk" data-spk="'+tid+'">'+spkSvg+'</button></div>';
+      if(d.extra_text_zh)h+='<div style="font-size:.84rem;color:#4a5568;margin-top:6px;padding-top:6px;border-top:1px dashed #ddd">'+esc(d.extra_text_zh)+'</div>';
+      h+='</div>';
+    }
   }
   if(d.answer){
     var aid=mkSpk(d.answer);
     h+='<div class="lbl">参考答案</div>';
     h+='<div class="ans-box" style="border-left-color:#c0600a"><div class="en-row">';
     h+='<span>'+esc(d.answer)+'</span>';
-    h+='<button class="spk" data-spk="'+aid+'">'+spkSvg+'</button></div></div>';
+    h+='<button class="spk" data-spk="'+aid+'">'+spkSvg+'</button></div>';
+    if(d.answer_zh)h+='<div style="font-size:.84rem;color:#4a5568;margin-top:6px;padding-top:6px;border-top:1px dashed #ddd">'+esc(d.answer_zh)+'</div>';
+    h+='</div>';
   }
   return h+'</div></div>';
 }

@@ -1,283 +1,280 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PTE 词汇表</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #f5f6fa; --surface: #fff; --border: #e8eaf0;
-      --primary: #4a6fa5; --primary-light: #eef2f9;
-      --text: #2c3e50; --muted: #7f8c9a; --zh: #555e6e; --radius: 10px;
-    }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-    header { background: var(--primary); color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
-    header h1 { font-size: 1.2rem; font-weight: 600; }
-    header .count { font-size: 0.85rem; opacity: 0.85; }
-    .toolbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; gap: 10px; align-items: center; position: sticky; top: 53px; z-index: 99; }
-    .toolbar input { flex: 1; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
-    .toolbar input:focus { border-color: var(--primary); }
-    .tbtn { background: none; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px; cursor: pointer; color: var(--muted); font-size: 0.85rem; transition: all 0.2s; white-space: nowrap; }
-    .tbtn:hover { border-color: var(--primary); color: var(--primary); }
-    main { max-width: 860px; margin: 0 auto; padding: 18px 16px 40px; }
-    .stats { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
-    .card-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-    .word { font-size: 1.18rem; font-weight: 700; color: var(--primary); }
-    .phonetic { font-size: 0.82rem; color: #999; font-style: italic; }
-    .pos { font-size: 0.72rem; background: var(--primary-light); color: var(--primary); padding: 2px 7px; border-radius: 4px; font-weight: 500; }
-    .meaning { font-size: 0.97rem; font-weight: 500; margin-left: 2px; }
-    .spk { background: none; border: 1.5px solid var(--border); border-radius: 6px; padding: 4px 10px; cursor: pointer; color: var(--muted); font-size: 0.8rem; display: flex; align-items: center; gap: 4px; transition: all 0.2s; white-space: nowrap; margin-left: auto; }
-    .spk + .spk { margin-left: 4px; }
-    .spk:hover { border-color: var(--primary); color: var(--primary); }
-    .spk.on { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
-    .spk svg { width: 13px; height: 13px; }
-    .card-body { padding: 12px 16px 14px; }
-    .lbl { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 7px; font-weight: 600; }
-    .sg { margin-bottom: 9px; }
-    .sen { font-size: 0.91rem; line-height: 1.6; margin-bottom: 2px; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-    .sen .hi { color: var(--primary); font-weight: 600; }
-    .senzh { font-size: 0.87rem; color: var(--zh); line-height: 1.5; }
-    .spksm { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 1px 4px; cursor: pointer; color: var(--muted); display: inline-flex; align-items: center; flex-shrink: 0; transition: all 0.15s; }
-    .spksm:hover { border-color: var(--primary); color: var(--primary); }
-    .spksm.on { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
-    .pw { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
-    .pl { display: flex; flex-direction: column; gap: 4px; }
-    .pi { font-size: 0.87rem; padding: 4px 8px; border-radius: 5px; background: var(--primary-light); line-height: 1.5; }
-    .pen { color: #3a5a8a; font-weight: 500; }
-    .pzh { color: #666; }
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 24px; flex-wrap: wrap; }
-    .pgb { border: 1.5px solid var(--border); background: var(--surface); color: var(--text); padding: 6px 13px; border-radius: 7px; cursor: pointer; font-size: 0.87rem; transition: all 0.2s; min-width: 38px; text-align: center; }
-    .pgb:hover:not([disabled]) { border-color: var(--primary); color: var(--primary); }
-    .pgb.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .pgb[disabled] { opacity: 0.38; cursor: default; }
-    .dots { font-size: 0.85rem; color: var(--muted); }
-    .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-    .loading { text-align: center; padding: 80px 20px; color: var(--muted); }
-    .spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @media (max-width: 600px) { .spk span { display: none; } .toolbar { padding: 10px 14px; } }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PTE 词汇表</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f6fa;--sur:#fff;--bdr:#e4e8f0;
+  --pri:#4a6fa5;--pli:#eef2f9;--pdk:#2d5280;
+  --txt:#1e2d3d;--mut:#7a8799;--zh:#555e6e;
+  --grn:#2e7d52;--rad:10px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+/* header */
+header{background:var(--pdk);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.18)}
+header h1{font-size:1.1rem;font-weight:700}
+header .cnt{font-size:.82rem;opacity:.8}
+
+/* toolbar */
+.bar{background:var(--sur);border-bottom:1px solid var(--bdr);padding:11px 22px;display:flex;gap:8px;align-items:center;position:sticky;top:51px;z-index:99}
+.bar input{flex:1;border:1.5px solid var(--bdr);border-radius:8px;padding:8px 13px;font-size:.92rem;outline:none;transition:border-color .2s;color:var(--txt)}
+.bar input:focus{border-color:var(--pri)}
+.bar input::placeholder{color:var(--mut)}
+.tbtn{background:none;border:1.5px solid var(--bdr);border-radius:8px;padding:8px 14px;cursor:pointer;color:var(--mut);font-size:.82rem;transition:all .2s;white-space:nowrap}
+.tbtn:hover{border-color:var(--pri);color:var(--pri)}
+
+/* main */
+main{max-width:840px;margin:0 auto;padding:16px 14px 40px}
+.stats{font-size:.78rem;color:var(--mut);margin-bottom:10px}
+
+/* card */
+.card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rad);margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);overflow:hidden}
+
+.card-head{display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid var(--bdr);flex-wrap:wrap}
+.word{font-size:1.15rem;font-weight:700;color:var(--pri)}
+.phonetic{font-size:.8rem;color:#999;font-style:italic}
+.pos{font-size:.7rem;background:var(--pli);color:var(--pri);padding:2px 7px;border-radius:4px;font-weight:600}
+.meaning{font-size:.95rem;font-weight:600;color:var(--txt)}
+.spk-btns{margin-left:auto;display:flex;gap:5px}
+.spk{background:none;border:1.5px solid var(--bdr);border-radius:6px;padding:4px 9px;cursor:pointer;color:var(--mut);font-size:.78rem;display:flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap}
+.spk:hover{border-color:var(--pri);color:var(--pri)}
+.spk.on{border-color:var(--pri);color:var(--pri);background:var(--pli)}
+.spk svg{width:12px;height:12px}
+
+.card-body{padding:12px 16px 14px}
+.lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.8px;color:var(--mut);font-weight:700;margin-bottom:7px}
+
+/* sentences */
+.sg{margin-bottom:9px}
+.sen-en{font-size:.9rem;color:var(--txt);line-height:1.7;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.sen-en .hi{color:var(--pri);font-weight:700}
+.sen-zh{font-size:.85rem;color:var(--zh);line-height:1.5;margin-top:2px}
+.spksm{background:none;border:1px solid var(--bdr);border-radius:4px;padding:1px 5px;cursor:pointer;color:var(--mut);display:inline-flex;align-items:center;flex-shrink:0;transition:all .15s}
+.spksm:hover{border-color:var(--pri);color:var(--pri)}
+.spksm.on{border-color:var(--pri);color:var(--pri);background:var(--pli)}
+
+/* phrases */
+.pw{margin-top:10px;border-top:1px solid var(--bdr);padding-top:10px}
+.pl{display:flex;flex-direction:column;gap:4px}
+.pi{font-size:.86rem;padding:4px 9px;border-radius:5px;background:var(--pli);line-height:1.5}
+.pen{color:#3a5a8a;font-weight:600}
+.pzh{color:#666}
+
+/* pagination */
+.pagination{display:flex;justify-content:center;align-items:center;gap:5px;margin-top:22px;flex-wrap:wrap}
+.pgb{border:1.5px solid var(--bdr);background:var(--sur);color:var(--txt);padding:6px 13px;border-radius:7px;cursor:pointer;font-size:.85rem;transition:all .2s;min-width:36px;text-align:center}
+.pgb:hover:not([disabled]){border-color:var(--pri);color:var(--pri)}
+.pgb.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+.pgb[disabled]{opacity:.35;cursor:default}
+.dots{color:var(--mut);padding:0 2px;font-size:.85rem}
+
+.empty{text-align:center;padding:50px;color:var(--mut)}
+.loading{text-align:center;padding:70px;color:var(--mut)}
+.spinner{width:32px;height:32px;border:3px solid var(--bdr);border-top-color:var(--pri);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){.spk span{display:none}.bar{padding:9px 13px}}
+</style>
 </head>
 <body>
 
 <header>
   <h1>📖 PTE 词汇表</h1>
-  <span class="count" id="totalCount">加载中…</span>
+  <span class="cnt" id="totalCount">加载中…</span>
 </header>
 
-<div class="toolbar">
-  <input type="text" id="searchInput" placeholder="搜索单词、中文释义…" autocomplete="off" />
+<div class="bar">
+  <input type="text" id="searchInput" placeholder="搜索单词、中文释义…" autocomplete="off"/>
   <button class="tbtn" id="clearBtn">清除</button>
 </div>
 
 <main>
   <div class="stats" id="statsBar"></div>
-  <div id="cardList"><div class="loading"><div class="spinner"></div>正在加载词汇数据…</div></div>
+  <div id="cardList"><div class="loading"><div class="spinner"></div>正在加载…</div></div>
   <div class="pagination" id="pagination"></div>
 </main>
 
 <script>
-// ── TTS（放最前面，确保加载时立刻初始化）──
-var ttsVoices = [];
-var ttsActiveBtn = null;
-
-function ttsLoad() {
-  var v = window.speechSynthesis.getVoices();
-  if (v.length) ttsVoices = v;
+// ── TTS ──
+var ttsV=[],ttsBtn=null;
+function ttsLoad(){var v=speechSynthesis.getVoices();if(v.length)ttsV=v;}
+if(window.speechSynthesis){ttsLoad();speechSynthesis.onvoiceschanged=ttsLoad;}
+function ttsBest(){
+  return ttsV.find(function(v){return v.name==='Google US English';})
+    ||ttsV.find(function(v){return v.lang==='en-US';})
+    ||ttsV.find(function(v){return v.lang.startsWith('en');})
+    ||null;
 }
-if (window.speechSynthesis) {
-  ttsLoad();
-  window.speechSynthesis.onvoiceschanged = ttsLoad;
-}
-
-function ttsBest() {
-  return ttsVoices.find(function(v){ return v.name === 'Google US English'; })
-    || ttsVoices.find(function(v){ return v.lang === 'en-US'; })
-    || ttsVoices.find(function(v){ return v.lang.startsWith('en'); })
-    || null;
-}
-
-function ttsSpeak(text, btn) {
-  if (!window.speechSynthesis) return;
-  // 再次点击同一按钮 → 停止
-  if (ttsActiveBtn === btn) {
-    window.speechSynthesis.cancel();
-    btn.classList.remove('on');
-    ttsActiveBtn = null;
-    return;
-  }
-  // 停止之前的
-  window.speechSynthesis.cancel();
-  if (ttsActiveBtn) { ttsActiveBtn.classList.remove('on'); ttsActiveBtn = null; }
-
-  var u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US';
-  u.rate = 0.9;
-  var best = ttsBest();
-  if (best) u.voice = best;
-
-  ttsActiveBtn = btn;
-  btn.classList.add('on');
-
-  u.onend = function() { btn.classList.remove('on'); if (ttsActiveBtn===btn) ttsActiveBtn=null; };
-  u.onerror = function() { btn.classList.remove('on'); if (ttsActiveBtn===btn) ttsActiveBtn=null; };
-
-  window.speechSynthesis.speak(u);
+function ttsSpeak(text,btn){
+  if(!window.speechSynthesis)return;
+  if(ttsBtn===btn){speechSynthesis.cancel();btn.classList.remove('on');ttsBtn=null;return;}
+  speechSynthesis.cancel();
+  if(ttsBtn){ttsBtn.classList.remove('on');ttsBtn=null;}
+  var u=new SpeechSynthesisUtterance(text);
+  u.lang='en-US';u.rate=0.9;
+  var b=ttsBest();if(b)u.voice=b;
+  ttsBtn=btn;btn.classList.add('on');
+  u.onend=u.onerror=function(){btn.classList.remove('on');if(ttsBtn===btn)ttsBtn=null;};
+  speechSynthesis.speak(u);
 }
 
-// ── 数据 & 分页 ──
-var PAGE_SIZE = 20;
-var allData = [], filtered = [], currentPage = 1;
-// 存放每个朗读按钮对应的文本
-var speakTexts = {};
+// ── 数据 & 状态 ──
+var PAGE=20,allData=[],filtered=[],curPage=1;
+var speakTexts={},spkIdx=0;
 
 fetch('vocab_data.json')
-  .then(function(r){ return r.json(); })
-  .then(function(data){
-    allData = filtered = data;
-    document.getElementById('totalCount').textContent = '共 ' + data.length + ' 个词条';
+  .then(function(r){return r.json();})
+  .then(function(d){
+    allData=filtered=d;
+    document.getElementById('totalCount').textContent='共 '+d.length+' 个词条';
     render();
   })
   .catch(function(){
-    document.getElementById('cardList').innerHTML = '<div class="loading">⚠️ 数据加载失败</div>';
+    document.getElementById('cardList').innerHTML='<div class="loading">⚠️ 数据加载失败</div>';
   });
 
-document.getElementById('searchInput').addEventListener('input', function() {
-  var q = this.value.trim().toLowerCase();
-  filtered = q ? allData.filter(function(d){
-    return d.word.toLowerCase().includes(q) || d.meaning.includes(q);
-  }) : allData;
-  currentPage = 1;
-  render();
+// ── 搜索 ──
+document.getElementById('searchInput').addEventListener('input',function(){
+  var q=this.value.trim().toLowerCase();
+  filtered=q?allData.filter(function(d){
+    return d.word.toLowerCase().includes(q)||d.meaning.includes(q)||d.phonetic.includes(q);
+  }):allData;
+  curPage=1;render();
+});
+document.getElementById('clearBtn').addEventListener('click',function(){
+  document.getElementById('searchInput').value='';
+  filtered=allData;curPage=1;render();
 });
 
-document.getElementById('clearBtn').addEventListener('click', function() {
-  document.getElementById('searchInput').value = '';
-  filtered = allData;
-  currentPage = 1;
-  render();
-});
-
-// ── 朗读按钮点击（事件委托）──
-document.addEventListener('click', function(e) {
-  var btn = e.target.closest ? e.target.closest('[data-spk]') : null;
-  if (!btn) return;
-  var id = btn.getAttribute('data-spk');
-  var text = speakTexts[id];
-  if (text) ttsSpeak(text, btn);
+// ── 事件委托（朗读 & 分页） ──
+document.addEventListener('click',function(e){
+  var spkBtn=e.target.closest('[data-spk]');
+  if(spkBtn){
+    var t=speakTexts[spkBtn.getAttribute('data-spk')];
+    if(t)ttsSpeak(t,spkBtn);
+    return;
+  }
+  var pgBtn=e.target.closest('.pgb');
+  if(pgBtn&&!pgBtn.hasAttribute('disabled')){
+    var p=parseInt(pgBtn.getAttribute('data-pg'));
+    if(!isNaN(p)){curPage=p;render();}
+  }
 });
 
 // ── 渲染 ──
-var spkCounter = 0;
+function render(){
+  speakTexts={};spkIdx=0;
+  var total=filtered.length;
+  var pages=Math.max(1,Math.ceil(total/PAGE));
+  if(curPage>pages)curPage=pages;
+  var data=filtered.slice((curPage-1)*PAGE,curPage*PAGE);
 
-function render() {
-  var total = filtered.length;
-  var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  if (currentPage > totalPages) currentPage = totalPages;
-  var pageData = filtered.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
-
-  document.getElementById('statsBar').textContent =
+  document.getElementById('statsBar').textContent=
     document.getElementById('searchInput').value.trim()
-      ? '找到 ' + total + ' 个结果，共 ' + totalPages + ' 页'
-      : '共 ' + total + ' 个词条，第 ' + currentPage + ' / ' + totalPages + ' 页';
+      ?'找到 '+total+' 个结果，共 '+pages+' 页'
+      :'共 '+total+' 个词条，第 '+curPage+' / '+pages+' 页';
 
-  // 重置当前页的 speakTexts（防止无限增长）
-  speakTexts = {};
-  spkCounter = 0;
+  document.getElementById('cardList').innerHTML=
+    data.length?data.map(buildCard).join(''):'<div class="empty">没有找到匹配词条</div>';
 
-  document.getElementById('cardList').innerHTML =
-    pageData.length === 0
-      ? '<div class="empty">没有找到匹配的词条</div>'
-      : pageData.map(buildCard).join('');
-
-  renderPagination(totalPages);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderPg(pages);
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function mkSpkId(text) {
-  var id = 's' + (spkCounter++);
-  speakTexts[id] = text;
+// ── 工具 ──
+function mkSpk(text){
+  var id='s'+(spkIdx++);
+  speakTexts[id]=text;
   return id;
 }
-
-function isChinese(s) { return /[\u4e00-\u9fff]/.test(s); }
-
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function esc(s){
+  return String(s||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
 }
+function isCN(s){return /[\u4e00-\u9fff]/.test(s);}
 
-function buildCard(item) {
-  var enLines = (item.sentences||[]).filter(function(s){ return !isChinese(s); });
-  var zhLines = (item.sentences||[]).filter(function(s){ return isChinese(s); });
-  var firstEn = enLines[0] || item.word;
+var spkSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+var chatSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
 
-  var wordId = mkSpkId(item.word);
-  var sentId = mkSpkId(firstEn);
+// ── 构建卡片 ──
+function buildCard(item){
+  var enLines=(item.sentences||[]).filter(function(s){return!isCN(s);});
+  var zhLines=(item.sentences||[]).filter(function(s){return isCN(s);});
+  var firstEn=enLines.length?enLines[0]:item.word;
 
-  var spkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
-  var chatSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-  var smSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+  var wordId=mkSpk(item.word);
+  var sentId=mkSpk(firstEn);
 
-  var h = '<div class="card"><div class="card-header">';
-  h += '<span class="word">' + esc(item.word) + '</span>';
-  if (item.phonetic) h += '<span class="phonetic">' + esc(item.phonetic) + '</span>';
-  if (item.pos) h += '<span class="pos">' + esc(item.pos) + '</span>';
-  h += '<span class="meaning">' + esc(item.meaning) + '</span>';
-  h += '<button class="spk" data-spk="' + wordId + '">' + spkSvg + '<span>单词</span></button>';
-  h += '<button class="spk" data-spk="' + sentId + '">' + chatSvg + '<span>例句</span></button>';
-  h += '</div><div class="card-body">';
+  var h='<div class="card"><div class="card-head">';
+  h+='<span class="word">'+esc(item.word)+'</span>';
+  if(item.phonetic)h+='<span class="phonetic">'+esc(item.phonetic)+'</span>';
+  if(item.pos)h+='<span class="pos">'+esc(item.pos)+'</span>';
+  h+='<span class="meaning">'+esc(item.meaning)+'</span>';
+  h+='<div class="spk-btns">';
+  h+='<button class="spk" data-spk="'+wordId+'">'+spkSvg+'<span>单词</span></button>';
+  h+='<button class="spk" data-spk="'+sentId+'">'+chatSvg+'<span>例句</span></button>';
+  h+='</div></div>';
 
-  if (enLines.length > 0) {
-    h += '<div class="lbl">例句</div>';
-    var maxLen = Math.max(enLines.length, zhLines.length);
-    for (var i = 0; i < maxLen; i++) {
-      h += '<div class="sg">';
-      if (enLines[i]) {
-        var lineId = mkSpkId(enLines[i]);
-        var re = new RegExp('(' + esc(item.word).replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
-        var hi = esc(enLines[i]).replace(re, '<span class="hi">$1</span>');
-        h += '<div class="sen">' + hi + '<button class="spksm" data-spk="' + lineId + '">' + smSvg + '</button></div>';
+  h+='<div class="card-body">';
+
+  // 例句
+  if(enLines.length||zhLines.length){
+    h+='<div class="lbl">例句</div>';
+    var maxLen=Math.max(enLines.length,zhLines.length);
+    for(var i=0;i<maxLen;i++){
+      h+='<div class="sg">';
+      if(enLines[i]){
+        var lineId=mkSpk(enLines[i]);
+        // 高亮：加词边界 \b，防止匹配派生词
+        var escaped=esc(item.word).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        var re=new RegExp('\\b('+escaped+')\\b','gi');
+        var hi=esc(enLines[i]).replace(re,'<span class="hi">$1</span>');
+        h+='<div class="sen-en">'+hi;
+        h+='<button class="spksm" data-spk="'+lineId+'">'+spkSvg+'</button>';
+        h+='</div>';
       }
-      if (zhLines[i]) h += '<div class="senzh">' + esc(zhLines[i]) + '</div>';
-      h += '</div>';
+      if(zhLines[i])h+='<div class="sen-zh">'+esc(zhLines[i])+'</div>';
+      h+='</div>';
     }
   }
 
-  if (item.phrases && item.phrases.length) {
-    h += '<div class="pw"><div class="lbl">短语</div><div class="pl">';
-    item.phrases.forEach(function(p) {
-      var m = p.match(/^([^\u4e00-\u9fff]+?)\s*([\u4e00-\u9fff].*)$/);
-      if (m) h += '<div class="pi"><span class="pen">' + esc(m[1].trim()) + '</span> <span class="pzh">' + esc(m[2].trim()) + '</span></div>';
-      else   h += '<div class="pi"><span class="pen">' + esc(p) + '</span></div>';
+  // 短语
+  if(item.phrases&&item.phrases.length){
+    h+='<div class="pw"><div class="lbl">短语 / 词组</div><div class="pl">';
+    item.phrases.forEach(function(p){
+      var m=p.match(/^([^\u4e00-\u9fff]+?)\s*([\u4e00-\u9fff].*)$/);
+      if(m){
+        h+='<div class="pi"><span class="pen">'+esc(m[1].trim())+'</span>';
+        h+=' <span class="pzh">'+esc(m[2].trim())+'</span></div>';
+      }else{
+        h+='<div class="pi"><span class="pen">'+esc(p)+'</span></div>';
+      }
     });
-    h += '</div></div>';
+    h+='</div></div>';
   }
 
-  h += '</div></div>';
+  h+='</div></div>';
   return h;
 }
 
-function renderPagination(totalPages) {
-  var pg = document.getElementById('pagination');
-  if (totalPages <= 1) { pg.innerHTML = ''; return; }
-  var h = '<button class="pgb" data-pg="' + (currentPage-1) + '" ' + (currentPage===1?'disabled':'') + '>‹ 上一页</button>';
-  var delta = 2, pages = [];
-  for (var i = Math.max(1,currentPage-delta); i <= Math.min(totalPages,currentPage+delta); i++) pages.push(i);
-  if (pages[0] > 1) { h += '<button class="pgb" data-pg="1">1</button>'; if (pages[0]>2) h += '<span class="dots">…</span>'; }
-  pages.forEach(function(p) { h += '<button class="pgb ' + (p===currentPage?'active':'') + '" data-pg="' + p + '">' + p + '</button>'; });
-  if (pages[pages.length-1] < totalPages) { if (pages[pages.length-1]<totalPages-1) h += '<span class="dots">…</span>'; h += '<button class="pgb" data-pg="' + totalPages + '">' + totalPages + '</button>'; }
-  h += '<button class="pgb" data-pg="' + (currentPage+1) + '" ' + (currentPage===totalPages?'disabled':'') + '>下一页 ›</button>';
-  pg.innerHTML = h;
+// ── 分页 ──
+function renderPg(pages){
+  var pg=document.getElementById('pagination');
+  if(pages<=1){pg.innerHTML='';return;}
+  var h='<button class="pgb" data-pg="'+(curPage-1)+'" '+(curPage===1?'disabled':'')+'>‹ 上一页</button>';
+  var delta=2,ps=[];
+  for(var i=Math.max(1,curPage-delta);i<=Math.min(pages,curPage+delta);i++)ps.push(i);
+  if(ps[0]>1){h+='<button class="pgb" data-pg="1">1</button>';if(ps[0]>2)h+='<span class="dots">…</span>';}
+  ps.forEach(function(p){h+='<button class="pgb '+(p===curPage?'active':'')+'" data-pg="'+p+'">'+p+'</button>';});
+  if(ps[ps.length-1]<pages){if(ps[ps.length-1]<pages-1)h+='<span class="dots">…</span>';h+='<button class="pgb" data-pg="'+pages+'">'+pages+'</button>';}
+  h+='<button class="pgb" data-pg="'+(curPage+1)+'" '+(curPage===pages?'disabled':'')+'>下一页 ›</button>';
+  pg.innerHTML=h;
 }
-
-document.getElementById('pagination').addEventListener('click', function(e) {
-  var btn = e.target.closest ? e.target.closest('.pgb') : null;
-  if (!btn || btn.disabled || btn.hasAttribute('disabled')) return;
-  var p = parseInt(btn.getAttribute('data-pg'));
-  if (!isNaN(p)) { currentPage = p; render(); }
-});
 </script>
 </body>
 </html>

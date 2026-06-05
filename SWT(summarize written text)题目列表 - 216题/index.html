@@ -152,10 +152,16 @@ function buildCard(d){
     h+='<div class="passage-box" style="border-left-color:#1a6b8a"><div class="en-row">';
     h+='<span>'+esc(d.question)+'</span>';
     h+='<button class="spk" data-spk="'+qId+'">'+spkSvg+'</button></div></div>';
+    if(d.question_zh)h+='<div style="font-size:.84rem;color:#4a5568;padding:4px 2px">'+esc(d.question_zh)+'</div>';
   }
   if(d.answer){
+    var aId=mkSpk(d.answer);
     h+='<div class="lbl">参考答案（一句话总结）</div>';
-    h+='<div class="ans-box" style="border-left-color:#1a6b8a">'+esc(d.answer)+'</div>';
+    h+='<div class="ans-box" style="border-left-color:#1a6b8a"><div class="en-row">';
+    h+='<span>'+esc(d.answer)+'</span>';
+    h+='<button class="spk" data-spk="'+aId+'">'+spkSvg+'</button></div>';
+    if(d.answer_zh)h+='<div style="font-size:.84rem;color:#4a5568;margin-top:4px">'+esc(d.answer_zh)+'</div>';
+    h+='</div>';
   }
   return h+'</div></div>';
 }
