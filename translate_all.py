@@ -8,54 +8,45 @@ PTE 题目中文翻译脚本 (Windows)
        pip install deep-translator
   2. 运行脚本：
        python translate_all.py
-  3. 翻译完成后把生成的 data.json 上传到 GitHub 对应文件夹替换旧文件
-
-说明：
-  - 自动识别每个题型 JSON 中没有中文翻译的字段
-  - 翻译结果直接写回 JSON 文件
-  - 已有翻译的条目不会重复翻译
-  - 如果翻译失败会跳过并打印错误，不影响其他条目
+  3. 翻译完成后把 data.json 上传到 GitHub 对应文件夹替换旧文件
 """
 
 import json, os, time, sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 需要翻译的题型和对应字段（仅6个）
+# ── 只处理需要补充中文翻译的5个题型 ──
 TASKS = [
-    # RA 不需要翻译（逐句翻译已在文档中）
-
-    # RTS: 情景和参考答案需要中文翻译
+    # RTS: 情景和参考答案
     ("RTS(respond to situation)题目列表 - 155题",
      "data.json", ["situation", "answer"]),
 
-    # SWT: 文章和参考答案需要中文翻译
+    # SWT: 文章和参考答案
     ("SWT(summarize written text)题目列表 - 216题",
      "data.json", ["question", "answer"]),
 
-    # SST: 参考答案需要中文翻译
+    # SST: 音频内容（列表）和参考答案
     ("SST(summarize spoken text)题目列表 - 294题",
-     "data.json", ["answer"]),
+     "data.json", ["extra_text", "answer"]),
 
-    # RL: 参考答案需要中文翻译
+    # RL: 音频内容（列表）和参考答案
     ("RL(retell lecture)题目列表 - 242题",
-     "data.json", ["answer"]),
+     "data.json", ["extra_text", "answer"]),
 
-    # DI: 参考答案需要中文翻译
+    # DI: 参考答案
     ("DI(describe image)题目列表 - 464题",
      "data.json", ["answer"]),
 ]
 
+
 def is_chinese(text):
-    """检查文本是否已包含中文"""
     return any('\u4e00' <= c <= '\u9fff' for c in str(text or ''))
 
+
 def translate_text(translator, text):
-    """翻译单条文本，失败返回空字符串"""
     text = str(text or '').strip()
     if not text or len(text) < 2:
         return ''
-    # 超长文本截断（Google 限制5000字符）
     if len(text) > 4500:
         text = text[:4500]
     try:
@@ -64,6 +55,7 @@ def translate_text(translator, text):
     except Exception as e:
         print(f"    翻译失败: {str(e)[:60]}")
         return ''
+
 
 def process_file(translator, folder, json_file, fields):
     path = os.path.join(BASE_DIR, folder, json_file)
@@ -83,13 +75,26 @@ def process_file(translator, folder, json_file, fields):
             zh_field = field.replace('_en', '_zh') if '_en' in field else field + '_zh'
 
             # 已有中文翻译则跳过
-            if item.get(zh_field) and is_chinese(item.get(zh_field, '')):
+            if item.get(zh_field) and is_chinese(str(item.get(zh_field, ''))):
                 continue
-            # 原文为空则跳过
-            if not en_val or not str(en_val).strip():
+
+            # ── 列表类型（extra_text）：过滤中文和标签行，合并后翻译 ──
+            if isinstance(en_val, list):
+                en_lines = [l for l in en_val
+                            if l and not is_chinese(l)
+                            and l not in ('音频原文', '音频原文：')]
+                if not en_lines:
+                    continue
+                combined = ' '.join(en_lines)
+                zh = translate_text(translator, combined)
+                if zh:
+                    item[zh_field] = zh
+                    changed += 1
                 continue
-            # 原文本身是中文则跳过
-            if is_chinese(en_val):
+
+            # ── 字符串类型 ──
+            en_val = str(en_val or '').strip()
+            if not en_val or is_chinese(en_val):
                 continue
 
             zh = translate_text(translator, en_val)
@@ -97,22 +102,19 @@ def process_file(translator, folder, json_file, fields):
                 item[zh_field] = zh
                 changed += 1
 
-        # 进度显示
         if (i + 1) % 50 == 0 or (i + 1) == total:
             print(f"  进度: {i+1}/{total} (已翻译 {changed} 条)", end='\r')
 
-        # 每翻译50条暂停0.5秒，避免触发限流
         if changed > 0 and changed % 50 == 0:
             time.sleep(0.5)
 
     print(f"  完成: {total} 条，新增翻译 {changed} 条          ")
 
-    # 保存
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
 
+
 def main():
-    # 检查 deep-translator
     try:
         from deep_translator import GoogleTranslator
     except ImportError:
@@ -122,7 +124,6 @@ def main():
 
     translator = GoogleTranslator(source='en', target='zh-CN')
 
-    # 测试连接
     print("🔗 测试 Google 翻译连接...")
     try:
         test = translator.translate("hello")
@@ -148,9 +149,8 @@ def main():
             continue
 
     print("\n🎉 全部完成！")
-    print("\n接下来：")
-    print("  把各题型文件夹里的 data.json 上传到 GitHub 替换旧文件")
-    print("  网站会自动显示中文翻译，无需修改 HTML")
+    print("把各题型的 data.json 上传到 GitHub 即可显示中文翻译。")
+
 
 if __name__ == '__main__':
     main()
