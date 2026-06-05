@@ -42,8 +42,9 @@ def main():
 
         changed = 0
         for i, item in enumerate(data):
-            # 跳过已有翻译的
-            if item.get('extra_text_zh') and is_chinese(item['extra_text_zh']):
+            # 只有当 extra_text_zh 有实际中文内容时才跳过
+            existing = item.get('extra_text_zh', None)
+            if existing and isinstance(existing, str) and len(existing) > 5 and is_chinese(existing):
                 continue
 
             # 过滤 extra_text 里的标签行和中文行，合并成一段文字
