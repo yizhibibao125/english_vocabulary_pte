@@ -123,14 +123,18 @@ function buildCard(d){
     h+='<div class="sit-block"><div class="sit-row">';
     h+='<div class="sit-text">'+esc(d.situation)+'</div>';
     h+='<button class="spk" data-spk="'+sitId+'">'+spkSvg+'</button>';
-    h+='</div></div>';
+    h+='</div>';
+    if(d.situation_zh)h+='<div style="font-size:.85rem;color:#4a5568;margin-top:6px;padding-top:6px;border-top:1px dashed #ddd">'+esc(d.situation_zh)+'</div>';
+    h+='</div>';
   }
   if(d.answer){
     h+='<div class="lbl lbl-ans">✅ 参考答案</div>';
     h+='<div class="ans-block"><div class="ans-row">';
     h+='<div class="ans-text">'+esc(d.answer)+'</div>';
     h+='<button class="spk" data-spk="'+ansId+'">'+spkSvg+'</button>';
-    h+='</div></div>';
+    h+='</div>';
+    if(d.answer_zh)h+='<div style="font-size:.85rem;color:#4a5568;margin-top:6px;padding-top:6px;border-top:1px dashed #ddd">'+esc(d.answer_zh)+'</div>';
+    h+='</div>';
   }
   h+='</div></div>';
   return h;

@@ -126,18 +126,24 @@ function buildCard(d){
     h+='<div class="lbl">全文</div>';
     h+='<div class="full-text">'+esc(d.text)+'</div>';
   }
-  // 逐句翻译
+  // 逐句翻译 - 处理两种格式:
+  // 格式A: "English sentence.中文翻译。" (英中合并一行)
+  // 格式B: "English sentence." 和 "中文翻译。" (英中分两行)
   if(d.translations&&d.translations.length>0){
     h+='<div class="trans-section"><div class="lbl">逐句翻译</div>';
-    d.translations.forEach(function(line){
-      if(!line.trim())return;
-      // 逐句翻译格式: "English sentence.中文翻译。" 或 "English sentence. 中文翻译。"
+    function isCN(s){return /[\u4e00-\u9fff]/.test(s);}
+    var i=0;
+    while(i<d.translations.length){
+      var line=d.translations[i]||'';
+      if(!line.trim()){i++;continue;}
+      // 找第一个中文字符位置
       var splitIdx=-1;
-      for(var i=0;i<line.length;i++){
-        var c=line.charCodeAt(i);
-        if(c>=0x4e00&&c<=0x9fff){splitIdx=i;break;}
+      for(var ci=0;ci<line.length;ci++){
+        var cc=line.charCodeAt(ci);
+        if(cc>=0x4e00&&cc<=0x9fff){splitIdx=ci;break;}
       }
       if(splitIdx>0){
+        // 格式A: 英中合并一行
         var en=line.substring(0,splitIdx).trim();
         var zh=line.substring(splitIdx).trim();
         var lineId=mkSpk(en);
@@ -145,10 +151,25 @@ function buildCard(d){
         h+='<div class="trans-en">'+esc(en)+' <button class="spk-sm" data-spk="'+lineId+'">'+spkSvg+'</button></div>';
         h+='<div class="trans-zh">'+esc(zh)+'</div>';
         h+='</div>';
+        i++;
+      } else if(!isCN(line)){
+        // 格式B: 纯英文行，看下一行是否是中文
+        var en2=line.trim();
+        var zh2='';
+        if(i+1<d.translations.length&&isCN(d.translations[i+1])){
+          zh2=d.translations[i+1];i+=2;
+        } else {i++;}
+        var lineId2=mkSpk(en2);
+        h+='<div class="trans-item">';
+        h+='<div class="trans-en">'+esc(en2)+' <button class="spk-sm" data-spk="'+lineId2+'">'+spkSvg+'</button></div>';
+        if(zh2)h+='<div class="trans-zh">'+esc(zh2)+'</div>';
+        h+='</div>';
       } else {
-        h+='<div class="trans-item"><div class="trans-en">'+esc(line)+'</div></div>';
+        // 纯中文行（独立出现，附加到上一条）
+        h+='<div class="trans-zh" style="padding-left:10px">'+esc(line)+'</div>';
+        i++;
       }
-    });
+    }
     h+='</div>';
   }
   h+='</div></div>';

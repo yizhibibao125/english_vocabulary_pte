@@ -28,10 +28,13 @@ TASKS = [
      "data.json", ["title_en", "question"]),
 
     ("SWT(summarize written text)题目列表 - 216题",
-     "data.json", ["title_en", "question"]),
+     "data.json", ["title_en", "question", "answer"]),
+
+    ("RTS(respond to situation)题目列表 - 155题",
+     "data.json", ["title_en", "situation", "answer"]),
 
     ("SST(summarize spoken text)题目列表 - 294题",
-     "data.json", ["title_en"]),
+     "data.json", ["title_en", "answer"]),
 
     ("SGD(summarize group discussion)题目列表 - 56题",
      "data.json", ["title_en"]),
@@ -55,13 +58,13 @@ TASKS = [
      "data.json", ["title_en"]),
 
     ("RL(retell lecture)题目列表 - 242题",
-     "data.json", ["title_en"]),
+     "data.json", ["title_en", "answer"]),
 
     ("RP(re-order paragraph)题目列表 - 296题",
      "data.json", ["title_en"]),
 
     ("DI(describe image)题目列表 - 464题",
-     "data.json", ["title_en"]),
+     "data.json", ["title_en", "answer"]),
 
     ("FIB_R(fill in blanks reading)题目列表 - 412题",
      "data.json", ["title_en"]),

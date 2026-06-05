@@ -155,7 +155,9 @@ function buildCard(d){
     h+='<div class="lbl">参考答案</div>';
     h+='<div class="ans-box" style="border-left-color:#e65100"><div class="en-row">';
     h+='<span>'+esc(d.answer)+'</span>';
-    h+='<button class="spk" data-spk="'+aid+'">'+spkSvg+'</button></div></div>';
+    h+='<button class="spk" data-spk="'+aid+'">'+spkSvg+'</button></div>';
+    if(d.answer_zh)h+='<div style="font-size:.84rem;color:#4a5568;margin-top:6px;padding-top:6px;border-top:1px dashed #ddd">'+esc(d.answer_zh)+'</div>';
+    h+='</div>';
   }
   return h+'</div></div>';
 }
